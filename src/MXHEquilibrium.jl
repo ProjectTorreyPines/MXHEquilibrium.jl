@@ -1,0 +1,90 @@
+module MXHEquilibrium
+
+using EFIT
+using LinearAlgebra
+using Interpolations
+using ForwardDiff
+using Zygote
+using StaticArrays
+using Trapz
+
+import PolygonOps
+import Contour
+import Optim
+
+const mu0 = 4*pi*1e-7
+
+abstract type AbstractEquilibrium end
+export AbstractEquilibrium
+
+# Equilibrium Fallbacks
+_not_implemented(M) = error("$(typeof(M)) has not implemented this functionality")
+(M::AbstractEquilibrium)(x,y) = _not_implemented(M)
+magnetic_axis(M::AbstractEquilibrium,r,z) = _not_implemented(M)
+limits(M::AbstractEquilibrium) = _not_implemented(M)
+psi_limits(M::AbstractEquilibrium) = _not_implemented(M)
+psi_gradient(M::AbstractEquilibrium) = _not_implemented(M)
+electric_potential(M::AbstractEquilibrium, psi) = _not_implemented(M)
+electric_potential_gradient(M::AbstractEquilibrium) = _not_implemented(M)
+pressure(M::AbstractEquilibrium, psi) = _not_implemented(M)
+poloidal_current(M::AbstractEquilibrium, psi) = _not_implemented(M)
+pressure_gradient(M::AbstractEquilibrium, psi) = _not_implemented(M)
+poloidal_current_gradient(M::AbstractEquilibrium, psi) = _not_implemented(M)
+cocos(M::AbstractEquilibrium) = _not_implemented(M)
+B0Ip_sign(M::AbstractEquilibrium) = _not_implemented(M)
+psi_boundary(M::AbstractEquilibrium) = psi_limits(M)[2]
+beta_p(M::AbstractEquilibrium) = _not_implemented(M)
+beta_t(M::AbstractEquilibrium) = _not_implemented(M)
+
+# Equilibrium API
+export magnetic_axis, limits, psi_limits, psi_boundary, psi_gradient, electric_potential, electric_potential_gradient
+export pressure, poloidal_current, pressure_gradient, poloidal_current_gradient, safety_factor, B0Ip_sign
+export plasma_current, beta_n, beta_p, beta_t
+
+include("cocos.jl")
+export COCOS, cocos, check_cocos, identify_cocos, transform_cocos
+export cylindrical_cocos, poloidal_cocos, cylindrical_cocos_indices, poloidal_cocos_indices
+
+include("boundary.jl")
+export Boundary, PlasmaBoundary, FluxSurface, Wall, in_boundary, in_plasma, in_vessel
+export boundary, flux_surface, circumference, average, area, area_average, volume, volume_average
+
+include("shape.jl")
+export PlasmaShape, MillerShape, TurnbullMillerShape, MillerExtendedHarmonicShape
+export AsymmetricMillerShape, AMShape, MShape, TMShape, MXHShape, shape
+export curvature, triangularity, squareness, tilt, elevation, ovality
+export scale_aspect, elongation, aspect_ratio, major_radius, minor_radius
+export plasma_geometry
+
+# Shape Fallbacks
+(S::PlasmaShape)(x) = _not_implemented(S)
+shape(S::PlasmaShape) = _not_implemented(S)
+aspect_ratio(S::PlasmaShape) = _not_implemented(S)
+elongation(S::PlasmaShape) = _not_implemented(S)
+major_radius(S::PlasmaShape) = _not_implemented(S)
+minor_radius(S::PlasmaShape) = _not_implemented(S)
+elevation(S::PlasmaShape) = _not_implemented(S)
+triangularity(S::PlasmaShape) = _not_implemented(S)
+tilt(S::PlasmaShape) = _not_implemented(S)
+ovality(S::PlasmaShape) = _not_implemented(S)
+squareness(S::PlasmaShape) = _not_implemented(S)
+
+include("fitting.jl")
+export plasma_geometry, fit
+
+include("solovev.jl")
+export SolovevEquilibrium, solovev, clear_cache
+
+include("fields.jl")
+export Bfield, Efield, Jfield, EMFields, fields, gradB, curlB, poloidal_Bfield, poloidal_Jfield
+
+include("efit.jl")
+export EFITEquilibrium, efit
+
+include("efit_io.jl")
+export read_geqdsk
+
+include("transp_io.jl")
+export transp_potential!
+
+end # module
