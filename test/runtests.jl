@@ -1,7 +1,7 @@
 using Test
 
 using ForwardDiff
-using Equilibrium
+using MXHEquilibrium
 using EFIT
 
 

@@ -1,11 +1,11 @@
-# Equilibrium.jl
+# MXHEquilibrium.jl
 
-Equilibrium.jl provides tools for working with solutions of the Grad-Shafranov Equation.
+MXHEquilibrium.jl is a fork of Equilibrium.jl and provides functionality for Miller Extended Harmonic fitting.
 
 ## AbstractEquilibrium API
 
 ```julia
-using Equilibrium
+using MXHEquilibrium
 typeof(S) <: AbstractEquilibrium
 
 psi = S(r, z) # Poloidal flux at r,z
@@ -126,7 +126,7 @@ Dict{Any, Any} with 14 entries:
 ```
 
 ## Boundaries
-Equilibrium.jl also provides routines for working with boundries such as walls or flux surfaces. Internally boundaries are stored as a list of points forming a polygon.
+MXHEquilibrium.jl also provides routines for working with boundries such as walls or flux surfaces. Internally boundaries are stored as a list of points forming a polygon.
 
 ```julia
 
@@ -148,7 +148,7 @@ volume_average(fs, F) # average F over the volume
 ```
 
 ## Parameterized Plasma Shapes
-Equilibrium.jl provides the commonly used plasma shape parameterizations.
+MXHEquilibrium.jl provides the commonly used plasma shape parameterizations.
 
 ```julia
 help?> MillerShape # alias = MShape
@@ -211,7 +211,7 @@ help?> MillerExtendedHarmonicShape # alias = MXHShape
 ```
 
 ## Flux Surface Fitting
-Equilibrium.jl provides routines for fitting flux surfaces to a PlasmaShape
+MXHEquilibrium.jl provides routines for fitting flux surfaces to a PlasmaShape
 
 ```julia
 julia> g = readg(@__DIR__*"/test/g150219.03200");
