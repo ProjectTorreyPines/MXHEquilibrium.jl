@@ -52,7 +52,7 @@ test_data = ((cc1,S1,r1,btip1), (cc2,S2,r2,btip2), (cc3,S3,r3,btip3), (cc4,S4,r4
     @testset verbose = true "CurlB == μ₀J" begin
         for (cc, S, r, btip) in test_data
             @test curlB(S,r...) ≈ mu0*Jfield(S,r...) rtol=0.01
-            @test Equilibrium.curlB_autodiff(S,r...) ≈ mu0*Jfield(S,r...) rtol=0.01
+            @test MXHEquilibrium.curlB_autodiff(S,r...) ≈ mu0*Jfield(S,r...) rtol=0.01
         end
     end
 
@@ -62,10 +62,10 @@ test_data = ((cc1,S1,r1,btip1), (cc2,S2,r2,btip2), (cc3,S3,r3,btip3), (cc4,S4,r4
             @test Jfield(S,r...) ≈ Jfield(S,r[1],zero(r[1]),r[2]) rtol=0.01
 
             @test gradB(S,r...) ≈ gradB(S,r[1],zero(r[1]),r[2]) rtol=0.01
-            @test gradB(S,r[1],zero(r[1]),r[2]) ≈ Equilibrium.gradB_autodiff(S,r[1],zero(r[1]),r[2]) rtol=0.01
+            @test gradB(S,r[1],zero(r[1]),r[2]) ≈ MXHEquilibrium.gradB_autodiff(S,r[1],zero(r[1]),r[2]) rtol=0.01
 
             @test curlB(S,r...) ≈ curlB(S,r[1],zero(r[1]),r[2]) rtol=0.01
-            @test curlB(S,r[1],zero(r[1]),r[2]) ≈ Equilibrium.curlB_autodiff(S,r[1],zero(r[1]),r[2]) rtol=0.01
+            @test curlB(S,r[1],zero(r[1]),r[2]) ≈ MXHEquilibrium.curlB_autodiff(S,r[1],zero(r[1]),r[2]) rtol=0.01
         end
     end
 

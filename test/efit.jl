@@ -50,10 +50,10 @@ test_data = ((cc1,g1,M1,r1,btip1), (cc2,g2,M2,r2,btip2), (cc3,g3,M3,r3,btip3), (
             @test Jfield(M,r...) ≈ Jfield(M,r[1],zero(r[1]),r[2]) rtol=0.01
 
             @test gradB(M,r...) ≈ gradB(M,r[1],zero(r[1]),r[2]) rtol=0.01
-            @test gradB(M,r[1],zero(r[1]),r[2]) ≈ Equilibrium.gradB_autodiff(M,r[1],zero(r[1]),r[2]) rtol=0.01
+            @test gradB(M,r[1],zero(r[1]),r[2]) ≈ MXHEquilibrium.gradB_autodiff(M,r[1],zero(r[1]),r[2]) rtol=0.01
 
             @test curlB(M,r...) ≈ curlB(M,r[1],zero(r[1]),r[2]) rtol=0.01
-            @test curlB(M,r[1],zero(r[1]),r[2]) ≈ Equilibrium.curlB_autodiff(M,r[1],zero(r[1]),r[2]) rtol=0.01
+            @test curlB(M,r[1],zero(r[1]),r[2]) ≈ MXHEquilibrium.curlB_autodiff(M,r[1],zero(r[1]),r[2]) rtol=0.01
         end
     end
 
