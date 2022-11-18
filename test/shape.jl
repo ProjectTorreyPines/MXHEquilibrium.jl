@@ -42,7 +42,7 @@ S = MillerShape(R0,Z0,ϵ,κ,δ)
              -0.0009515964309653494]
 
         MXH = MXHShape(R0,Z0,ϵ,κ,c0,c,s)
-        bdry = boundary(MXH,N=500)
+        bdry = plasma_boundary(MXH,N=500)
         fMXH = fit(bdry,MXHShape(10))
         for f in fieldnames(MXHShape)
             (f in (:c, :s)) && continue
