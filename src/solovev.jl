@@ -570,11 +570,6 @@ function limits(S::SolovevEquilibrium)
     xlims, ylims = limits(shape(S),S.x_point)
 end
 
-
-function boundary(S::SolovevEquilibrium; kwargs...)
-    return flux_surface(S, 0.0; kwargs...)
-end
-
 function psi_gradient(S::SolovevEquilibrium,r,z)
     R0 = major_radius(S.S)
     Z0 = elevation(S.S)
@@ -584,11 +579,16 @@ function psi_gradient(S::SolovevEquilibrium,r,z)
 end
 
 _solovev_magnetic_axis = Dict{SolovevEquilibrium,NTuple{2}}()
-function clear_cache(S)
+function clear_magnetic_axis_cache!(S::SolovevEquilibrium)
     delete!(_solovev_magnetic_axis,S)
 end
 
-function magnetic_axis(S::SolovevEquilibrium; x0 = (S.S.R0, zero(S.S.R0)))
+# add future cache clearing routines here
+function clear_cache!(S::SolovevEquilibrium)
+    clear_magnetic_axis_cache!(S)
+end
+
+function magnetic_axis(S::SolovevEquilibrium; x0 = (major_radius(shape(S)), elevation(shape(S))))
     if S in keys(_solovev_magnetic_axis)
         return _solovev_magnetic_axis[S]
     else

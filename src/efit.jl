@@ -89,7 +89,7 @@ function electric_potential_gradient(N::EFITEquilibrium, psi)
     return Interpolations.gradient(N.phi, psi)[1]
 end
 
-function psi_boundary(N::EFITEquilibrium; precision::Float64=1E-3, r::Union{Nothing,AbstractRange}=nothing, z::Union{Nothing,AbstractRange}=nothing)
+function plasma_boundary_psi(N::EFITEquilibrium; precision::Float64=1E-3, r::Union{Nothing,AbstractRange}=nothing, z::Union{Nothing,AbstractRange}=nothing)
     original_psirange = psi_limits(N)
     psirange = collect(original_psirange)
     psirange[1] = psirange[1] - (psirange[end] - psirange[1]) * 0.5
@@ -110,11 +110,12 @@ function psi_boundary(N::EFITEquilibrium; precision::Float64=1E-3, r::Union{Noth
         bnd = flux_surface(r, z, Psi, psimid)
         if bnd !== nothing
             psirange[1] = psimid
-            if (bnd.r[1] == bnd.r[end]) && (bnd.z[1] == bnd.z[end]) && (abs(psirange[end] - psirange[1]) < precision)
-                if any(abs.([(minimum(bnd.r) - minimum(N.r)), (maximum(bnd.r) - maximum(N.r)), (minimum(bnd.z) - minimum(N.z)), (maximum(bnd.z) - maximum(N.z))]) .< 2 * dd)
-                    return original_psirange[end]
+            if (abs(psirange[end] - psirange[1]) < precision)
+                xlims, ylims = limits(bnd)
+                if any(abs.([(xlims .- rlims)..., (ylims .- zlims)...]) .< 2 * dd)
+                    return original_psirange[end], bnd
                 else
-                    return psimid
+                    return psimid, bnd
                 end
             end
         else
@@ -123,6 +124,21 @@ function psi_boundary(N::EFITEquilibrium; precision::Float64=1E-3, r::Union{Noth
     end
 end
 
-function boundary(N::EFITEquilibrium)
-    flux_surface(N, psi_boundary(N))
+_efit_plasma_boundary = Dict{EFITEquilibrium,Boundary}()
+function clear_plasma_boundary_cache!(N::EFITEquilibrium)
+    delete!(_efit_plasma_boundary,N)
+end
+
+function plasma_boundary(N::EFITEquilibrium; kwargs...)
+    if N in keys(_efit_plasma_boundary)
+        return _efit_plasma_boundary[N]
+    else
+        psi, bdry = plasma_boundary_psi(N; kwargs...)
+        return bdry
+    end
+end
+
+# add more cache clearing routines here
+function clear_cache!(N::EFITEquilibrium)
+    clear_plasma_boundary_cache!(N)
 end

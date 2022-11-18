@@ -32,14 +32,14 @@ pressure_gradient(M::AbstractEquilibrium, psi) = _not_implemented(M)
 poloidal_current_gradient(M::AbstractEquilibrium, psi) = _not_implemented(M)
 cocos(M::AbstractEquilibrium) = _not_implemented(M)
 B0Ip_sign(M::AbstractEquilibrium) = _not_implemented(M)
-psi_boundary(M::AbstractEquilibrium) = psi_limits(M)[2]
 beta_p(M::AbstractEquilibrium) = _not_implemented(M)
 beta_t(M::AbstractEquilibrium) = _not_implemented(M)
+plasma_boundary_psi(M::AbstractEquilibrium) = psi_limits(M)[2]
 
 # Equilibrium API
-export magnetic_axis, limits, psi_limits, psi_boundary, psi_gradient, electric_potential, electric_potential_gradient
+export magnetic_axis, limits, psi_limits, plasma_boundary_psi, psi_gradient, electric_potential, electric_potential_gradient
 export pressure, poloidal_current, pressure_gradient, poloidal_current_gradient, safety_factor, B0Ip_sign
-export plasma_current, beta_n, beta_p, beta_t
+export plasma_current, beta_n, beta_p, beta_t, psi_range, rho_p, toroidal_flux
 
 include("cocos.jl")
 export COCOS, cocos, check_cocos, identify_cocos, transform_cocos
@@ -47,7 +47,8 @@ export cylindrical_cocos, poloidal_cocos, cylindrical_cocos_indices, poloidal_co
 
 include("boundary.jl")
 export Boundary, PlasmaBoundary, FluxSurface, Wall, in_boundary, in_plasma, in_vessel
-export boundary, flux_surface, circumference, average, area, area_average, volume, volume_average
+export boundary, flux_surface, plasma_boundary
+export circumference, average, area, area_average, volume, volume_average
 
 include("shape.jl")
 export PlasmaShape, MillerShape, TurnbullMillerShape, MillerExtendedHarmonicShape

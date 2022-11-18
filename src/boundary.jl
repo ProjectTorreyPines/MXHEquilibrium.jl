@@ -13,6 +13,8 @@ const PlasmaBoundary = Boundary
 const FluxSurface = Boundary
 const Wall = Boundary
 
+Base.length(b::Boundary) = length(b.points)
+
 function Base.show(io::IO, b::Boundary)
     print(io,"Boundary: npoints = $(length(b.points))")
 end
@@ -44,30 +46,62 @@ in_boundary(b::Boundary,x,y) = in_boundary(b,(x,y))
 const in_vessel = in_boundary
 const in_plasma = in_boundary
 
-function flux_surface(M::AbstractEquilibrium, psi::Float64, dx::Float64=0.01, dy::Float64=0.01; raise_error=true)
+function flux_surface(M::AbstractEquilibrium, psi::Float64, dx::Float64=0.01, dy::Float64=0.01; n_interp=0, raise_error=true)
+    maxis = magnetic_axis(M)
+    psimag, psibdry = psi_limits(M)
+    if abs(psi) >= abs(psimag)
+        return Boundary([maxis[1]],[maxis[2]])
+    end
+
     xlims, ylims = limits(M)
     x = range(xlims...,step=dx)
     y = range(ylims...,step=dy)
     Psi = [M(xx,yy) for xx in x, yy in y]
-    bnd = flux_surface(x, y, Psi, psi)
+    bnd = flux_surface(x, y, Psi, psi; maxis = maxis)
     if isnothing(bnd) && raise_error
         throw("Could not trace closed flux surface at ψ=$psi. Note that ψ limits are $(psi_limits(M))")
     end
+
+    if n_interp > 0
+        N = length(bnd.r)
+        t = 0:(N-1)
+        itp_r = linear_interpolation(t, bnd.r, extrapolation_bc = Periodic())
+        itp_z = linear_interpolation(t, bnd.z, extrapolation_bc = Periodic())
+        τ = range(0,N-1,length=n_interp)
+        ri = itp_r.(τ)
+        zi = itp_z.(τ)
+        return Boundary(ri,zi)
+    end
+
     return bnd
 end
 
-function flux_surface(x::AbstractRange, y::AbstractRange, Psi::Matrix, psi::Float64)
+function flux_surface(x::AbstractRange, y::AbstractRange, Psi::Matrix, psi::Float64; maxis = ())
     cl = Contour.contour(x, y, Psi, psi)
-    # pick a flux surface that closes
+    # pick a flux surface that closes and isn't far away from Z=0
     for cc in Contour.lines(cl)
         xc, yc = Contour.coordinates(cc)
         if !((xc[1] == xc[end]) & (yc[1] == yc[end]))
             continue
         end
+        if length(maxis) > 0
+            N = length(xc)
+            ym = sum(yc)/N
+            xm = sum(xc)/N
+            R0, Z0 = maxis
+            r = hypot(xm/R0 - 1,ym/R0 - Z0/R0)
+            if r > 0.25
+                continue
+            end
+        end
         return Boundary(xc,yc)
     end
     return nothing
 end
+
+plasma_boundary(M::AbstractEquilibrium) = flux_surface(M, plasma_boundary_psi(M))
+
+limits(b::Boundary) = extrema(b.r), extrema(b.z)
 
 function circumference(b::Boundary)
     p = b.points

@@ -195,7 +195,7 @@ help?> AsymmetricMillerShape # alias = AMShape
 
 help?> MillerExtendedHarmonicShape # alias = MXHShape 
 
-  TurnbullMillerShape Structure
+  MillerExtendedHarmonicShape Structure
 
   Defines the Miller Extended Harmonic Plasma Shape Parameterization
   > Arbon, Ryan, Jeff Candy, and Emily A. Belli. "Rapidly-convergent flux-surface shape parameterization." Plasma Physics and Controlled Fusion 63.1 (2020): 012001.

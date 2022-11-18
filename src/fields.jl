@@ -160,6 +160,23 @@ function Efield(M::T, x, y, z, vrot::AbstractVector) where T<:AbstractEquilibriu
     return E_xyz
 end
 
+function psi_range(M::T; N=100, offset=0.01) where T<:AbstractEquilibrium
+    psimag, psibdry = psi_limits(M)
+
+    if psibdry > 0 && psimag < 0
+        psibdry *= (1 - offset)
+    elseif psibdry > 0 && psimag > 0
+        psibdry *= (1 + offset)
+    elseif psibdry < 0 && psimag < 0
+        psibdry *= (1 + offset)
+    elseif psibdry < 0 && psimag > 0
+        psibdry *= (1 - offset)
+    end
+    psimag *= (1-offset)
+
+    return range(psimag, psibdry, length=N)
+end
+
 function rho_p(M::T, psi) where T<:AbstractEquilibrium
     psimag,psibry = psi_limits(M)
     flux = abs(psibry - psimag)
@@ -175,12 +192,14 @@ function rho_p(M::T, x, y, z) where T<:AbstractEquilibrium
     rho_p(M,r,z)
 end
 
-function toroidal_flux(M::T,psi) where T<:AbstractEquilibrium
+function toroidal_flux(M::T,psi; N=100) where T<:AbstractEquilibrium
     cc = cocos(M)
     cocos_factor = cc.sigma_Bp*cc.sigma_rhotp*(2pi)^(1 - cc.exp_Bp)
 
     psimag, psibry = psi_limits(M)
-    phi = cocos_factor*hquadrature(x->safety_factor(M,x), psimag, psi)[1]
+    psi_arr = range(psimag*0.99,psi,length=N)
+    q = safety_factor.(M, psi_arr)
+    phi = cocos_factor*trapz(psi_arr, q)
     return phi
 end
 

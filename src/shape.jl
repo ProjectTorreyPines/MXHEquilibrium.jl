@@ -29,13 +29,13 @@ function limits(s::PlasmaShape, x_point=nothing)
     return xlims, ylims
 end
 
-function boundary(S::PlasmaShape; N=100)
+function plasma_boundary(S::PlasmaShape; N=100)
     x,y = shape(S,N=N)
-    return Boundary(collect(zip(x[1:end-1],y[1:end-1])))
+    return PlasmaBoundary(collect(zip(x[1:end-1],y[1:end-1])))
 end
 
 function circumference(S::PlasmaShape; N=100)
-    bdry = boundary(S, N=N)
+    bdry = plasma_boundary(S, N=N)
     return circumference(bdry)
 end
 
@@ -63,7 +63,7 @@ function plasma_geometry(bdry::Boundary)
 end
 
 function plasma_geometry(S::PlasmaShape)
-    return plasma_geometry(boundary(S))
+    return plasma_geometry(plasma_boundary(S))
 end
 
 function plasma_geometry(M::AbstractEquilibrium)
@@ -91,7 +91,7 @@ Fields:\\
 `κ`  - Elongation\\
 `δ`  - Triangularity
 """
-mutable struct MillerShape{T} <: PlasmaShape{T}
+struct MillerShape{T} <: PlasmaShape{T}
     R0::T  # Major Radius [m]
     Z0::T  # Elevation
     ϵ::T   # Inverse Aspect Ratio a/R0 (a = minor radius)
@@ -118,18 +118,33 @@ tilt(S::MillerShape) = zero(S.δ)
 ovality(S::MillerShape) = zero(S.δ)
 squareness(S::MillerShape) = zero(S.δ)
 
+function m_rz(r, θ, R0, Z0, κ, δ)
+    δ₀ = asin(δ)
+    x = R0 + r * cos(θ + δ₀ * sin(θ))
+    y = Z0 + r * κ * sin(θ)
+    return x, y
+end
+
 function shape(S::MillerShape; N=100)
+    r = S.ϵ*S.R0
+
+    x = zeros(N)
+    y = zeros(N)
     τ = range(0,2pi,length=N)
-    δ₀ = asin(S.δ)
-    x = S.R0*(1 .+ S.ϵ .* cos.(τ .+ δ₀*sin.(τ)))
-    y = S.Z0 .+ S.R0*(S.ϵ*S.κ*sin.(τ))
-    return x,y
+    @inbounds for i=1:N
+        x[i], y[i] = m_rz(r, τ[i], S.R0, S.Z0, S.κ, S.δ)
+    end
+    return x, y
 end
 
 function (S::MillerShape)(θ)
-    δ₀ = asin(S.δ)
-    x = S.R0*(1 + S.ϵ * cos(θ + δ₀*sin(θ)))
-    y = S.Z0 + S.R0*(S.ϵ*S.κ*sin(θ))
+    r = S.ϵ*S.R0
+    x, y = m_rz(r, θ, S.R0, S.Z0, S.κ, S.δ)
+    return x,y
+end
+
+function (S::MillerShape)(r,θ)
+    x, y = m_rz(r, θ, S.R0, S.Z0, S.κ, S.δ)
     return x,y
 end
 
@@ -146,7 +161,7 @@ Fields:\\
 `δl` - Lower Triangularity\\
 `δu` - Upper Triangularity
 """
-mutable struct AsymmetricMillerShape{T} <: PlasmaShape{T}
+struct AsymmetricMillerShape{T} <: PlasmaShape{T}
     R0::T  # Major Radius [m]
     Z0::T  # Elevation
     ϵ::T   # Inverse Aspect Ratio a/R0 (a = minor radius)
@@ -173,21 +188,35 @@ tilt(S::AMShape) = zero(S.δ)
 ovality(S::AMShape) = zero(S.δ)
 squareness(S::AMShape) = zero(S.δ)
 
+function am_rz(r, θ, R0, Z0, κ, δl, δu)
+    δ₀l = asin(δl)
+    δ₀u = asin(δu)
+    y = Z0 + r * κ * sin(θ)
+    δ₀ = y < Z0 ? δ₀l : δ₀u
+    x = R0 + r * cos(θ + δ₀ * sin(θ))
+    return x, y
+end
+
 function shape(S::AMShape; N=100)
+    r = S.ϵ*S.R0
+
+    x = zeros(N)
+    y = zeros(N)
     τ = range(0,2pi,length=N)
-    δ₀l = asin(S.δl)
-    δ₀u = asin(S.δu)
-    y = S.Z0 .+ S.R0*(S.ϵ*S.κ*sin.(τ))
-    δ₀ = [t < S.Z0 ? δ₀l : δ₀u for t in y]
-    x = S.R0*(1 .+ S.ϵ .* cos.(τ .+ δ₀ .* sin.(τ)))
-    return x,y
+    @inbounds for i=1:N
+        x[i], y[i] = am_rz(r, τ[i], S.R0, S.Z0, S.κ, S.δl, S.δu)
+    end
+    return x, y
 end
 
 function (S::AMShape)(θ)
-    δ₀l = asin(S.δl)
-    δ₀u = asin(S.δu)
-    y = S.Z0 + S.R0*(S.ϵ*S.κ*sin(θ))
-    x = S.R0*(1 + S.ϵ * cos(θ + (y < S.Z0 ? δ₀l : δ₀u)*sin(θ)))
+    r = S.ϵ*S.R0
+    x, y = am_rz(r, θ, S.R0, S.Z0, S.κ, S.δl, S.δu)
+    return x,y
+end
+
+function (S::AMShape)(r,θ)
+    x, y = am_rz(r, θ, S.R0, S.Z0, S.κ, S.δl, S.δu)
     return x,y
 end
 
@@ -205,7 +234,7 @@ Fields:\\
 `δ`  - Triangularity\\
 `ζ`  - Squareness
 """
-mutable struct TurnbullMillerShape{T} <: PlasmaShape{T}
+struct TurnbullMillerShape{T} <: PlasmaShape{T}
     R0::T  # Major Radius [m]
     Z0::T  # Elevation
     ϵ::T   # Inverse Aspect Ratio a/R0 (a = minor radius)
@@ -232,18 +261,33 @@ tilt(S::TMShape) = zero(S.δ)
 ovality(S::TMShape) = zero(S.δ)
 squareness(S::TMShape) = S.ζ
 
-function shape(S::TurnbullMillerShape; N=100)
+function tm_rz(r, θ, R0, Z0, κ, δ, ζ)
+    δ₀ = asin(δ)
+    x = R0 + r * cos(θ + δ₀*sin(θ))
+    y = Z0 + r * κ * sin(θ + ζ*sin(2*θ))
+    return x, y
+end
+
+function shape(S::TMShape; N=100)
+    r = S.ϵ*S.R0
+
+    x = zeros(N)
+    y = zeros(N)
     τ = range(0,2pi,length=N)
-    δ₀ = asin(S.δ)
-    x = S.R0*(1 .+ S.ϵ .* cos.(τ .+ δ₀*sin.(τ)))
-    y = S.Z0 .+ S.R0*(S.ϵ*S.κ*sin.(τ .+ S.ζ*sin.(2*τ)))
+    @inbounds for i=1:N
+        x[i], y[i] = tm_rz(r, τ[i], S.R0, S.Z0, S.κ, S.δ, S.ζ)
+    end
+    return x, y
+end
+
+function (S::TMShape)(θ)
+    r = S.ϵ*S.R0
+    x, y = tm_rz(r, θ, S.R0, S.Z0, S.κ, S.δ, S.ζ)
     return x,y
 end
 
-function (S::TurnbullMillerShape)(θ)
-    δ₀ = asin(S.δ)
-    x = S.R0*(1 + S.ϵ * cos(θ + δ₀*sin(θ)))
-    y = S.Z0 + S.R0*(S.ϵ*S.κ*sin(θ + S.ζ*sin(2*θ)))
+function (S::TMShape)(r,θ)
+    x, y = tm_rz(r, θ, S.R0, S.Z0, S.κ, S.δ, S.ζ)
     return x,y
 end
 
@@ -266,7 +310,7 @@ Fields:\\
 `c`  - Cosine coefficients i.e. [ovality,...]\\
 `s`  - Sine coefficients i.e. [asin(triangularity), squareness,...])
 """
-mutable struct MillerExtendedHarmonicShape{N, T} <: PlasmaShape{T}
+struct MillerExtendedHarmonicShape{N, T} <: PlasmaShape{T}
     R0::T           # Major Radius
     Z0::T           # Elevation
     ϵ::T            # inverse aspect ratio a/R0
@@ -278,13 +322,23 @@ end
 
 const MXHShape = MillerExtendedHarmonicShape
 
-MillerExtendedHarmonicShape(N) = MillerExtendedHarmonicShape(0.0, 0.0, 0.0, 0.0, 0.0, zeros(SVector{N}), zeros(SVector{N}))
+function MillerExtendedHarmonicShape(N)
+    if N == -2
+        return MillerShape()
+    elseif N == -1
+        return AsymmetricMillerShape()
+    end
+    return MXHShape(0.0, 0.0, 0.0, 0.0, 0.0, zeros(SVector{N}), zeros(SVector{N}))
+end
 
 function MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, c0, c::Vector, s::Vector)
     @assert length(c) == length(s) 
     
     R0, Z0, ϵ, κ, c0 = promote(R0,Z0,ϵ,κ,c0, one(eltype(s)), one(eltype(c)))
     N = length(c)
+    if N == 0 && c0 == zero(R0)
+        return MillerShape(R0,Z0,ϵ,κ,c0)
+    end
     c = convert(SVector{N, typeof(R0)}, c)
     s = convert(SVector{N, typeof(R0)}, s)
 
@@ -294,6 +348,11 @@ end
 function MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, δ; tilt=zero(κ), c0=tilt, ovality=one(R0), squareness=zero(R0))
 
     R0, Z0, ϵ, κ, c0, ovality, squareness = promote(R0,Z0,ϵ,κ,c0,ovality,squareness)
+    Z = zero(R0)
+    if δ == Z && c0 == Z && ovality == Z && squareness == Z
+        return MillerShape(R0,Z0,ϵ,κ,δ)
+    end
+
     c = SVector(ovality, zero(ovality))
     s = SVector(asin(δ), -squareness)
     MillerExtendedHarmonicShape(R0,Z0,ϵ,κ,c0,c,s)
@@ -318,56 +377,52 @@ triangularity(S::MXHShape) = sin(S.s[1])
 # MXH squareness differs from TurnbullMiller, using MXH paper's definition
 squareness(S::MXHShape) = S.s[2]
 
-function shape(S::MillerExtendedHarmonicShape{L,T}; N=100) where {L,T}
-    x = zeros(N)
-    y = zeros(N)
-    r = S.ϵ*S.R0
-    θ = range(0,2pi,length=N)
-    
-    @inbounds for i=1:N
-        c_sum = 0.0
-        for n=1:L
-            c_sum += S.c[n]*cos(n*θ[i])
-        end
-
-        s_sum = 0.0
-        for n=1:L
-            s_sum += S.s[n]*sin(n*θ[i])
-        end
-
-        θ_R = θ[i] + S.c0 + c_sum + s_sum
-        x[i] = S.R0 + r*cos(θ_R)
-        y[i] = S.Z0 + S.κ*r*sin(θ[i])
-    end
-
-    return x, y
-end
-
-function (S::MillerExtendedHarmonicShape{N,T})(θ) where {N,T}
-    r = S.ϵ*S.R0
+function mxh_rz(r, θ, R0, Z0, κ, c0, c::SVector{N}, s::SVector{N}) where N
 
     c_sum = 0.0
     @inbounds for n=1:N
-        c_sum += S.c[n]*cos(n*θ)
+        c_sum += c[n]*cos(n*θ)
     end
 
     s_sum = 0.0
     @inbounds for n=1:N
-        s_sum += S.s[n]*sin(n*θ)
+        s_sum += s[n]*sin(n*θ)
     end
 
-    θ_R = θ + S.c0 + c_sum + s_sum
-    x = S.R0 + r*cos(θ_R)
-    y = S.Z0 + S.κ*r*sin(θ)
+    θ_R = θ + c0 + c_sum + s_sum
+    x = R0 + r*cos(θ_R)
+    y = Z0 + κ*r*sin(θ)
 
     return x, y
 end
 
-function plasma_geometry(S::Union{MillerShape,TurnbullMillerShape})
+function shape(S::MXHShape; N=100)
+    r = S.ϵ*S.R0
+
+    x = zeros(N)
+    y = zeros(N)
+    θ = range(0,2pi,length=N)
+    @inbounds for i=1:N
+        x[i], y[i] = mxh_rz(r, θ[i], S.R0, S.Z0, S.κ, S.c0, S.c, S.s)
+    end
+
+    return x, y
+end
+
+function (S::MXHShape)(θ)
+    r = S.ϵ*S.R0
+    return mxh_rz(r, θ, S.R0, S.Z0, S.κ, S.c0, S.c, S.s)
+end
+
+function (S::MXHShape)(r,θ)
+    return mxh_rz(r, θ, S.R0, S.Z0, S.κ, S.c0, S.c, S.s)
+end
+
+function plasma_geometry(S::Union{MShape,TMShape})
     return S.R0, S.Z0, S.R0*S.ϵ, S.κ, S.δ, S.δ
 end
 
-function plasma_geometry(S::AsymmetricMillerShape)
+function plasma_geometry(S::AMShape)
     return S.R0, S.Z0, S.R0*S.ϵ, S.κ, S.δl, S.δu
 end
 
