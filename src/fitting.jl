@@ -11,8 +11,12 @@ end
 
 function MXH_angles(bdry::Boundary; n_interp=0, debug=false)
 
-    R0, Z0, r, κ = plasma_geometry(bdry)
-    
+    G = plasma_geometry(bdry)
+    R0 = G.R0
+    Z0 = G.Z0
+    r = G.r
+    κ = sum(G.κ...)/2
+
     r_s = copy(bdry.r)
     z_s = copy(bdry.z)
 
@@ -98,7 +102,11 @@ end
 
 function MXH_parameters(bdry::Boundary; N=7, kwargs...)
     
-    R0, Z0, r, κ, = plasma_geometry(bdry)
+    G = plasma_geometry(bdry)
+    R0 = G.R0
+    Z0 = G.Z0
+    r = G.r
+    κ = sum(G.κ...)/2
     
     θ, θr = MXH_angles(bdry; kwargs...)
     
@@ -122,8 +130,9 @@ function fit(bdry::Boundary, S::MillerShape; kwargs...)
         s = MShape(bdry.r[1], bdry.z[1], 0.0, 0.0, 0.0)
         return s
     end
-    R0, Z0, r, κ, δl, δu = plasma_geometry(bdry)
-    return MillerShape(R0, Z0, r/R0, κ, (δl + δu)/2)
+
+    G = plasma_geometry(bdry)
+    return MillerShape(G.R0, G.Z0, G.r/G.R0, sum(G.κ)/2, sum(G.δ)/2)
 end
 
 function fit(bdry::Boundary, S::AsymmetricMillerShape; kwargs...)
@@ -131,6 +140,24 @@ function fit(bdry::Boundary, S::AsymmetricMillerShape; kwargs...)
         s = AMShape(bdry.r[1], bdry.z[1], 0.0, 0.0, 0.0, 0.0)
         return s
     end
-    R0, Z0, r, κ, δl, δu = plasma_geometry(bdry)
-    return AsymmetricMillerShape(R0, Z0, r/R0, κ, δl, δu)
+    G = plasma_geometry(bdry)
+    return AMShape(G.R0, G.Z0, G.r/G.R0, sum(G.κ)/2, G.δ...)
+end
+
+function fit(bdry::Boundary, S::TurnbullMillerShape; kwargs...)
+    if length(bdry) == 2
+        s = TMShape(bdry.r[1], bdry.z[1], 0.0, 0.0, 0.0, 0.0)
+        return s
+    end
+    G = plasma_geometry(bdry)
+    return TMShape(G.R0, G.Z0, G.r/G.R0, sum(G.κ)/2, sum(G.δ)/2, sum(G.ζ)/4)
+end
+
+function fit(bdry::Boundary, S::LShape; kwargs...)
+    if length(bdry) == 2
+        s = TMShape(bdry.r[1], bdry.z[1], 0.0, 0.0, 0.0, 0.0)
+        return s
+    end
+    G = plasma_geometry(bdry)
+    return LuceShape(G)
 end

@@ -7,18 +7,6 @@ function Base.copy(S::T) where T <: PlasmaShape
     return SS
 end
 
-function Base.show(io::IO, S::T) where T<:PlasmaShape
-    print(io, "$(T)\n")
-    print(io, "  R0 = $(major_radius(S)) [m]\n")
-    print(io, "  Z0 = $(elevation(S)) [m]\n")
-    print(io, "  ϵ  = $(inv(aspect_ratio(S)))\n")
-    print(io, "  κ  = $(elongation(S))\n")
-    print(io, "  δ  = $(triangularity(S))\n")
-    print(io, "  ζ  = $(squareness(S))\n")
-    print(io, "  ξ  = $(ovality(S))\n")
-    print(io, "  τ  = $(tilt(S))\n")
-end
-
 function limits(s::PlasmaShape, x_point=nothing)
     xlims = (0.8*s(pi)[1], 1.2*s(0.0)[1])
     ylims = (1.2*s(3pi/2)[2], 1.2*s(pi/2)[2])
@@ -43,31 +31,6 @@ function scale_aspect(S::PlasmaShape,s)
     SS = copy(S)
     SS.ϵ = s*S.ϵ
     return SS
-end
-
-function plasma_geometry(bdry::Boundary)
-    rmin,rmax = extrema(bdry.r)
-    zmin,zmax = extrema(bdry.z)
-
-    r = (rmax - rmin)/2
-    κ = (zmax - zmin)/(2*r)
-    R0 = (rmax + rmin)/2
-    Z0 = (zmax + zmin)/2
-
-    Ru = bdry.r[argmax(bdry.z)]
-    Rl = bdry.r[argmin(bdry.z)]
-    δu = (R0 - Ru)/r
-    δl = (R0 - Rl)/r
-
-    return R0, Z0, r, κ, δl, δu
-end
-
-function plasma_geometry(S::PlasmaShape)
-    return plasma_geometry(plasma_boundary(S))
-end
-
-function plasma_geometry(M::AbstractEquilibrium)
-    return plasma_geometry(shape(M))
 end
 
 function Base.getproperty(S::PlasmaShape,s::Symbol)
@@ -114,9 +77,15 @@ major_radius(S::MillerShape) = S.R0
 minor_radius(S::MillerShape) = S.R0*S.ϵ
 elevation(S::MillerShape) = S.Z0
 triangularity(S::MillerShape) = S.δ
-tilt(S::MillerShape) = zero(S.δ)
-ovality(S::MillerShape) = zero(S.δ)
-squareness(S::MillerShape) = zero(S.δ)
+
+function Base.show(io::IO, S::MillerShape)
+    print(io, "$(typeof(S))\n")
+    print(io, "  R0 = $(round(major_radius(S),digits=3)) [m]\n")
+    print(io, "  Z0 = $(round(elevation(S),digits=3)) [m]\n")
+    print(io, "  ϵ  = $(round(inv(aspect_ratio(S)),digits=3))\n")
+    print(io, "  κ  = $(round(elongation(S),digits=3))\n")
+    print(io, "  δ  = $(round(triangularity(S),digits=3))")
+end
 
 function m_rz(r, θ, R0, Z0, κ, δ)
     δ₀ = asin(δ)
@@ -184,9 +153,15 @@ major_radius(S::AMShape) = S.R0
 minor_radius(S::AMShape) = S.R0*S.ϵ
 elevation(S::AMShape) = S.Z0
 triangularity(S::AMShape) = (S.δl,S.δu)
-tilt(S::AMShape) = zero(S.δ)
-ovality(S::AMShape) = zero(S.δ)
-squareness(S::AMShape) = zero(S.δ)
+
+function Base.show(io::IO, S::AMShape)
+    print(io, "$(typeof(S))\n")
+    print(io, "  R0 = $(round(major_radius(S),digits=3)) [m]\n")
+    print(io, "  Z0 = $(round(elevation(S),digits=3)) [m]\n")
+    print(io, "  ϵ  = $(round(inv(aspect_ratio(S)),digits=3))\n")
+    print(io, "  κ  = $(round(elongation(S),digits=3))\n")
+    print(io, "  δ  = $(round.(triangularity(S),digits=3))")
+end
 
 function am_rz(r, θ, R0, Z0, κ, δl, δu)
     δ₀l = asin(δl)
@@ -257,9 +232,17 @@ major_radius(S::TMShape) = S.R0
 minor_radius(S::TMShape) = S.R0*S.ϵ
 elevation(S::TMShape) = S.Z0
 triangularity(S::TMShape) = S.δ
-tilt(S::TMShape) = zero(S.δ)
-ovality(S::TMShape) = zero(S.δ)
 squareness(S::TMShape) = S.ζ
+
+function Base.show(io::IO, S::TMShape)
+    print(io, "$(typeof(S))\n")
+    print(io, "  R0 = $(round(major_radius(S),digits=3)) [m]\n")
+    print(io, "  Z0 = $(round(elevation(S),digits=3)) [m]\n")
+    print(io, "  ϵ  = $(round(inv(aspect_ratio(S)),digits=3))\n")
+    print(io, "  κ  = $(round(elongation(S),digits=3))\n")
+    print(io, "  δ  = $(round(triangularity(S),digits=3))\n")
+    print(io, "  ζ  = $(round(squareness(S),digits=3))")
+end
 
 function tm_rz(r, θ, R0, Z0, κ, δ, ζ)
     δ₀ = asin(δ)
@@ -377,6 +360,17 @@ triangularity(S::MXHShape) = sin(S.s[1])
 # MXH squareness differs from TurnbullMiller, using MXH paper's definition
 squareness(S::MXHShape) = S.s[2]
 
+function Base.show(io::IO, S::MXHShape)
+    print(io, "$(typeof(S))\n")
+    print(io, "  R0 = $(round(major_radius(S),digits=3)) [m]\n")
+    print(io, "  Z0 = $(round(elevation(S),digits=3)) [m]\n")
+    print(io, "  ϵ  = $(round(inv(aspect_ratio(S)),digits=3))\n")
+    print(io, "  κ  = $(round(elongation(S),digits=3))\n")
+    print(io, "  c₀ = $(round(tilt(S),digits=3))\n")
+    print(io, "  c  = $(round.(S.c,digits=3))\n")
+    print(io, "  s  = $(round.(S.s,digits=3))")
+end
+
 function mxh_rz(r, θ, R0, Z0, κ, c0, c::SVector{N}, s::SVector{N}) where N
 
     c_sum = 0.0
@@ -418,14 +412,151 @@ function (S::MXHShape)(r,θ)
     return mxh_rz(r, θ, S.R0, S.Z0, S.κ, S.c0, S.c, S.s)
 end
 
+"""
+Luce Plasma Shape as described in:
+
+> "An analytic functional form for characterization and generation of axisymmetric plasma boundaries",\\
+TC Luce, Plasma Phys. Control. Fusion 55 (2013) http://dx.doi.org/10.1088/0741-3335/55/9/095009
+
+Fields:\\
+  `R0` - Major Radius [m]\\
+  `Z0` - Elevation [m]\\
+  `r`  - Minor Radius [m]\\
+  `Zᵣₘ` - Z(Rₘₐₓ) [m]\\
+  `κ`  - Lower and Upper Elongation\\
+  `δ`  - Lower and Upper Triangulation\\
+  `ζ`  - Squareness for the I,II,III,IV quadrants
+"""
+struct LuceShape{T} <: PlasmaShape{T}
+    R0::T          # Major Radius
+    Z0::T          # Elevation
+    r::T           # Minor Radius
+    Zᵣₘ::T         # Zoff = Z(Rₘₐₓ)
+    κ::NTuple{2,T} # Lower and Upper Elongation
+    δ::NTuple{2,T} # Lower and Upper Triangularity
+    ζ::NTuple{4,T} # Squareness for the 4 quadrants ζ_(uo,ui,li,lo)
+end
+
+const LShape = LuceShape
+
+LuceShape() = LuceShape(0.0, 0.0, 0.0, 0.0, (0.0,0.0), (0.0,0.0), (0.0,0.0,0.0,0.0))
+
+function LuceShape(R0,Z0,r,Zrm,κ::NTuple{2},δ::NTuple{2},ζ::NTuple{4})
+    R0,Z0,r,Zrm = promote(R0,Z0,r,Zrm)
+    κ = convert.(typeof(R0), κ)
+    δ = convert.(typeof(R0), δ)
+    ζ = convert.(typeof(R0), ζ)
+    LuceShape(R0,Z0,r,Zrm,κ,δ,ζ)
+end
+
+function LuceShape(G::PlasmaGeometricParameters)
+    LuceShape(getfield.(G,fieldnames(typeof(G)))...)
+end
+
+function Base.show(io::IO, G::LuceShape)
+    print(io, "$(typeof(G))\n")
+    print(io, "  R0 = $(round(G.R0,digits=3)) [m]\n")
+    print(io, "  Z0 = $(round(G.Z0,digits=3)) [m]\n")
+    print(io, "  r  = $(round(G.r,digits=3))  [m]\n")
+    print(io, "  Zᵣₘ= $(round.(G.Zᵣₘ,digits=3)) [m]\n")
+    print(io, "  κ  = $(round.(G.κ,digits=3))\n")
+    print(io, "  δ  = $(round.(G.δ,digits=3))\n")
+    print(io, "  ζ  = $(round.(G.ζ,digits=3))")
+end
+
+aspect_ratio(S::LShape) = S.r/S.R0
+elongation(S::LShape) = S.κ
+major_radius(S::LShape) = S.R0
+minor_radius(S::LShape) = S.r
+elevation(S::LShape) = S.Z0
+triangularity(S::LShape) = S.δ
+squareness(S::LShape) = S.ζ
+
+function superellipse(t,A,B,n)
+    st, ct = sincos(t)
+    x = abs(ct)^(2/n) * A*sign(ct)
+    y = abs(st)^(2/n) * B*sign(st)
+    return x, y
+end
+
+function luce_rz(r, θ, R0, Z0, Zrm, κ::NTuple{2}, δ::NTuple{2}, ζ::NTuple{4})
+
+    θ = mod2pi(θ)
+    if 0 <= θ < pi/2
+        t = θ
+        A = r*(1 + δ[2])
+        B = κ[2]*r
+        n = -log(2)/log(inv(sqrt(2)) + ζ[1]*(1 - inv(sqrt(2))))
+
+        x, y = superellipse(t,A,B,n)
+        R = x + r*(inv(r/R0) - δ[2])
+        Z = y + Zrm
+    elseif pi/2 <= θ < pi
+        t = pi - θ
+        A = r*(1 - δ[2])
+        B = κ[2]*r
+        n = -log(2)/log(inv(sqrt(2)) + ζ[2]*(1 - inv(sqrt(2))))
+
+        x, y = superellipse(t,A,B,n)
+        R = r*(inv(r/R0) - δ[2]) - x
+        Z = y + Zrm
+    elseif pi <= θ < 3pi/2
+        t = θ - pi
+        A = r*(1 - δ[1])
+        B = κ[1]*r
+        n = -log(2)/log(inv(sqrt(2)) + ζ[3]*(1 - inv(sqrt(2))))
+
+        x, y = superellipse(t,A,B,n)
+        R = r*(inv(r/R0) - δ[1]) - x
+        Z = Zrm - y
+    else
+        t = 2pi - θ
+        A = r*(1 + δ[1])
+        B = κ[1]*r
+        n = -log(2)/log(inv(sqrt(2)) + ζ[4]*(1 - inv(sqrt(2))))
+
+        x, y = superellipse(t,A,B,n)
+        R = x + r*(inv(r/R0) - δ[1])
+        Z = Zrm - y
+    end
+    return R, Z
+end
+
+function shape(S::LuceShape; N=100)
+    x = zeros(N)
+    y = zeros(N)
+    θ = range(0,2pi,length=N)
+    @inbounds for i=1:N
+        x[i], y[i] = luce_rz(S.r, θ[i], S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ)
+    end
+
+    return x, y
+end
+
+function (S::LuceShape)(θ)
+    return luce_rz(S.r, θ, S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ)
+end
+
+function (S::LuceShape)(r,θ)
+    return luce_rz(r, θ, S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ)
+end
+
+# --- special cases ----
+function plasma_geometry(S::PlasmaShape)
+    return plasma_geometry(plasma_boundary(S))
+end
+
 function plasma_geometry(S::Union{MShape,TMShape})
-    return S.R0, S.Z0, S.R0*S.ϵ, S.κ, S.δ, S.δ
+    Z = zero(S.δ)
+    return PlasmaGeometricParameters(S.R0,S.Z0,S.R0*S.ϵ,S.Z0,(S.κ,S.κ), (S.δ, S.δ),(Z,Z,Z,Z))
 end
 
 function plasma_geometry(S::AMShape)
-    return S.R0, S.Z0, S.R0*S.ϵ, S.κ, S.δl, S.δu
+    Z = zero(S.δ)
+    return PlasmaGeometricParameters(S.R0,S.Z0,S.R0*S.ϵ, S.Z0, (S.κ,S.κ), (S.δl, S.δu),(Z,Z,Z,Z))
 end
 
+#--- Curvature calculation via AutoDiff ---
 _d1x(S) = (S._get_x)'
 _d1y(S) = (S._get_y)'
 _d2x(S) = (S._get_x)''

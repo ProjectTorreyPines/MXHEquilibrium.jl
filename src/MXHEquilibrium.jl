@@ -50,12 +50,14 @@ export Boundary, PlasmaBoundary, FluxSurface, Wall, in_boundary, in_plasma, in_v
 export boundary, flux_surface, plasma_boundary
 export circumference, average, area, area_average, volume, volume_average
 
+include("geometry.jl")
+export PlasmaGeometricParameters, plasma_geometry
+
 include("shape.jl")
-export PlasmaShape, MillerShape, TurnbullMillerShape, MillerExtendedHarmonicShape
-export AsymmetricMillerShape, AMShape, MShape, TMShape, MXHShape, shape
+export PlasmaShape, MillerShape, TurnbullMillerShape, MillerExtendedHarmonicShape, LuceShape
+export AsymmetricMillerShape, AMShape, MShape, TMShape, MXHShape, LShape, shape
 export curvature, triangularity, squareness, tilt, elevation, ovality
 export scale_aspect, elongation, aspect_ratio, major_radius, minor_radius
-export plasma_geometry
 
 # Shape Fallbacks
 (S::PlasmaShape)(x) = _not_implemented(S)
@@ -71,7 +73,7 @@ ovality(S::PlasmaShape) = _not_implemented(S)
 squareness(S::PlasmaShape) = _not_implemented(S)
 
 include("fitting.jl")
-export plasma_geometry, fit
+export fit
 
 include("solovev.jl")
 export SolovevEquilibrium, solovev, clear_cache
