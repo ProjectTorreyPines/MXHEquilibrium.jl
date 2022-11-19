@@ -153,11 +153,78 @@ function fit(bdry::Boundary, S::TurnbullMillerShape; kwargs...)
     return TMShape(G.R0, G.Z0, G.r/G.R0, sum(G.κ)/2, sum(G.δ)/2, sum(G.ζ)/4)
 end
 
-function fit(bdry::Boundary, S::LShape; kwargs...)
+function x_point_constraints(G::PlasmaGeometricParameters, quad::Int, x::Vector)
+    α, β, n = x
+    a = G.r
+    κl, κu = G.κ
+    δl, δu = G.δ
+    ζ_I,ζ_II,ζ_III,ζ_IV = G.ζ
+    ir2 = inv(sqrt(2))
+    #x-point constraint
+    if quad == 1
+        C1 = abs(1 - (a/α)*(1 + δu))^n + abs(κu*a/β)^n - 1
+    
+        C2 = abs(1 + a*(1 + δu)*(1 - ir2)*(ζ_I - 1)/α)^n + 
+             abs(κu*a*(ir2 + ζ_I*(1 - ir2))/β)^n - 1
+
+        C3 = β*abs((α - a*(1 + δu))/(κu*a))^(n-1) * abs(β/α)^(n-1) -
+             (δu >= 0.0 ? (1 - δu) : inv(1 + δu))
+
+    elseif quad == 2
+        C1 = abs(1 - a/α*(1 - δu))^n + abs(κu*a/β)^n - 1
+
+        C2 = abs(1 + a*(1 - δu)*(1 - ir2)*(ζ_II - 1)/α)^n + 
+             abs(κu*a*(ir2 + ζ_II*(1 - ir2))/β)^n - 1
+
+        C3 = β*abs((α - a*(1 - δu))/κu*a)^(n-1) * abs(β/α)^(n-1) -
+             (δu >= 0.0 ? inv(1 + δu) : (1 - δu))
+
+    elseif quad == 3
+        C1 = abs((1 - a*(1 - δl))/α)^n + abs(κl*a/β)^n - 1
+
+        C2 = abs((1 + a*(1 - δl)*(1 - ir2)*(ζ_III - 1))/α)^n + 
+             abs(κl*a*(ir2 + ζ_III*(1 - ir2))/β)^n - 1
+
+        C3 = β*abs((α - α*(1 - δl))/(κl*a))^(n-1) * abs(β/a)^(n-1) -
+             (δl >= 0.0 ? inv(1 + δl) : (1 - δl))
+    else
+        C1 = abs((1 - a*(1 + δl))/α)^n + abs(κl*a/β)^n - 1
+
+        C2 = abs((1 + a*(1 + δl)*(1 - ir2)*(ζ_IV - 1))/α)^n + 
+             abs(κl*a*(ir2 + ζ_IV*(1 - ir2))/β)^n - 1
+
+        C3 = β*abs((α - α*(1 - δl))/(κl*a))^(n-1) * abs(β/α)^(n-1) -
+             (δl >= 0.0 ? (1 + δl) : inv(1 - δl))
+
+
+    end
+
+    return (C1 + C2 + C3)^2
+end
+
+function fit(bdry::Boundary, S::LuceShape; x_point = 0, kwargs...)
     if length(bdry) == 2
-        s = TMShape(bdry.r[1], bdry.z[1], 0.0, 0.0, 0.0, 0.0)
+        Z = zero(bdry.r[1])
+        s = LuceShape(bdry.r[1], bdry.z[1], Z, Z,(Z,Z),(Z,Z),
+                      (Z,Z,Z,Z),(Z,Z,Z,Z))
         return s
     end
+
     G = plasma_geometry(bdry)
-    return LuceShape(G)
+
+    if x_point == 0
+        return LuceShape(G)
+    else
+        quad = x_point
+        alphas = zeros(4)
+        res = Optim.optimize(x->x_point_constraints(G,quad,x), [G.r,G.r,2.0], Optim.NelderMead())
+        α,β,n = res.minimizer
+        println("A = ",α)
+        println("B = ",β)
+        println("n = ",n)
+        println("C = ", x_point_constraints(G,quad,[α,β,n]))
+        alphas[quad] = α
+        alphas = ntuple(i->alphas[i],4)
+        return LuceShape(G,alphas)
+    end
 end

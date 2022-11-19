@@ -426,6 +426,7 @@ Fields:\\
   `κ`  - Lower and Upper Elongation\\
   `δ`  - Lower and Upper Triangulation\\
   `ζ`  - Squareness for the I,II,III,IV quadrants
+  `α`  - x-point fitting parameter for each quadrants
 """
 struct LuceShape{T} <: PlasmaShape{T}
     R0::T          # Major Radius
@@ -435,22 +436,26 @@ struct LuceShape{T} <: PlasmaShape{T}
     κ::NTuple{2,T} # Lower and Upper Elongation
     δ::NTuple{2,T} # Lower and Upper Triangularity
     ζ::NTuple{4,T} # Squareness for the 4 quadrants ζ_(uo,ui,li,lo)
+    α::NTuple{4,T} # x-point fitting parameter for each quadrant
 end
 
 const LShape = LuceShape
 
-LuceShape() = LuceShape(0.0, 0.0, 0.0, 0.0, (0.0,0.0), (0.0,0.0), (0.0,0.0,0.0,0.0))
+LuceShape() = LuceShape(0.0, 0.0, 0.0, 0.0, (0.0,0.0),
+                        (0.0,0.0), (0.0,0.0,0.0,0.0),
+                        (0.0,0.0,0.0,0.0))
 
-function LuceShape(R0,Z0,r,Zrm,κ::NTuple{2},δ::NTuple{2},ζ::NTuple{4})
+function LuceShape(R0,Z0,r,Zrm,κ::NTuple{2},δ::NTuple{2},ζ::NTuple{4},α::NTuple{4})
     R0,Z0,r,Zrm = promote(R0,Z0,r,Zrm)
     κ = convert.(typeof(R0), κ)
     δ = convert.(typeof(R0), δ)
     ζ = convert.(typeof(R0), ζ)
-    LuceShape(R0,Z0,r,Zrm,κ,δ,ζ)
+    ζ = convert.(typeof(R0), α)
+    LuceShape(R0,Z0,r,Zrm,κ,δ,ζ,α)
 end
 
-function LuceShape(G::PlasmaGeometricParameters)
-    LuceShape(getfield.(G,fieldnames(typeof(G)))...)
+function LuceShape(G::PlasmaGeometricParameters{T}, alphas::NTuple{4} = ntuple(i->zero(T),4)) where T
+    LuceShape(G.R0,G.Z0,G.r,G.Zᵣₘ,G.κ,G.δ,G.ζ,alphas)
 end
 
 function Base.show(io::IO, G::LuceShape)
@@ -472,14 +477,14 @@ elevation(S::LShape) = S.Z0
 triangularity(S::LShape) = S.δ
 squareness(S::LShape) = S.ζ
 
-function superellipse(t,A,B,n)
+function superellipse(t,A,B,nx,ny)
     st, ct = sincos(t)
-    x = abs(ct)^(2/n) * A*sign(ct)
-    y = abs(st)^(2/n) * B*sign(st)
+    x = abs(ct)^(2/nx) * A*sign(ct)
+    y = abs(st)^(2/ny) * B*sign(st)
     return x, y
 end
 
-function luce_rz(r, θ, R0, Z0, Zrm, κ::NTuple{2}, δ::NTuple{2}, ζ::NTuple{4})
+function luce_rz(r, θ, R0, Z0, Zrm, κ::NTuple{2}, δ::NTuple{2}, ζ::NTuple{4}, α::NTuple{4})
 
     θ = mod2pi(θ)
     if 0 <= θ < pi/2
@@ -488,8 +493,13 @@ function luce_rz(r, θ, R0, Z0, Zrm, κ::NTuple{2}, δ::NTuple{2}, ζ::NTuple{4}
         B = κ[2]*r
         n = -log(2)/log(inv(sqrt(2)) + ζ[1]*(1 - inv(sqrt(2))))
 
-        x, y = superellipse(t,A,B,n)
-        R = x + r*(inv(r/R0) - δ[2])
+        if α[1] != 0
+            x, y = superellipse(t,α[1],B,n,n)
+            R = x + r*(inv(r/R0) - 1) + α[1]
+        else
+            x, y = superellipse(t,A,B,n,n)
+            R = x + r*(inv(r/R0) - δ[2])
+        end
         Z = y + Zrm
     elseif pi/2 <= θ < pi
         t = pi - θ
@@ -497,26 +507,39 @@ function luce_rz(r, θ, R0, Z0, Zrm, κ::NTuple{2}, δ::NTuple{2}, ζ::NTuple{4}
         B = κ[2]*r
         n = -log(2)/log(inv(sqrt(2)) + ζ[2]*(1 - inv(sqrt(2))))
 
-        x, y = superellipse(t,A,B,n)
-        R = r*(inv(r/R0) - δ[2]) - x
+        if α[2] != 0
+            x, y = superellipse(t,α[2],B,n,n)
+            R = r*(inv(r/R0) - 1) + α[2] - x
+        else
+            x, y = superellipse(t,A,B,n,n)
+            R = r*(inv(r/R0) - δ[2]) - x
+        end
         Z = y + Zrm
     elseif pi <= θ < 3pi/2
         t = θ - pi
         A = r*(1 - δ[1])
         B = κ[1]*r
         n = -log(2)/log(inv(sqrt(2)) + ζ[3]*(1 - inv(sqrt(2))))
-
-        x, y = superellipse(t,A,B,n)
-        R = r*(inv(r/R0) - δ[1]) - x
+        if α[3] != 0
+            x, y = superellipse(t,α[3],B,nx,n)
+            R = r*(inv(r/R0) - 1) + α[3] - x
+        else
+            x, y = superellipse(t,A,B,n,n)
+            R = r*(inv(r/R0) - δ[1]) - x
+        end
         Z = Zrm - y
     else
         t = 2pi - θ
         A = r*(1 + δ[1])
         B = κ[1]*r
         n = -log(2)/log(inv(sqrt(2)) + ζ[4]*(1 - inv(sqrt(2))))
-
-        x, y = superellipse(t,A,B,n)
-        R = x + r*(inv(r/R0) - δ[1])
+        if α[4] != 0
+            x, y = superellipse(t,α[4],B,n,n)
+            R = x + r*(inv(r/R0) - 1) + α[4]
+        else
+            x, y = superellipse(t,A,B,n,n)
+            R = x + r*(inv(r/R0) - δ[1])
+        end
         Z = Zrm - y
     end
     return R, Z
@@ -527,18 +550,18 @@ function shape(S::LuceShape; N=100)
     y = zeros(N)
     θ = range(0,2pi,length=N)
     @inbounds for i=1:N
-        x[i], y[i] = luce_rz(S.r, θ[i], S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ)
+        x[i], y[i] = luce_rz(S.r, θ[i], S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ, S.α)
     end
 
     return x, y
 end
 
 function (S::LuceShape)(θ)
-    return luce_rz(S.r, θ, S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ)
+    return luce_rz(S.r, θ, S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ, S.α)
 end
 
 function (S::LuceShape)(r,θ)
-    return luce_rz(r, θ, S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ)
+    return luce_rz(r, θ, S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ, S.α)
 end
 
 # --- special cases ----
