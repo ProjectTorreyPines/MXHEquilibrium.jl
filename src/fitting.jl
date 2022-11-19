@@ -15,7 +15,7 @@ function MXH_angles(bdry::Boundary; n_interp=0, debug=false)
     R0 = G.R0
     Z0 = G.Z0
     r = G.r
-    κ = sum(G.κ...)/2
+    κ = sum(G.κ)/2
 
     r_s = copy(bdry.r)
     z_s = copy(bdry.z)
@@ -106,7 +106,7 @@ function MXH_parameters(bdry::Boundary; N=7, kwargs...)
     R0 = G.R0
     Z0 = G.Z0
     r = G.r
-    κ = sum(G.κ...)/2
+    κ = sum(G.κ)/2
     
     θ, θr = MXH_angles(bdry; kwargs...)
     
