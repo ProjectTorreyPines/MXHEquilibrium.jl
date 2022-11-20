@@ -103,96 +103,79 @@ plasma_boundary(M::AbstractEquilibrium) = flux_surface(M, plasma_boundary_psi(M)
 
 limits(b::Boundary) = extrema(b.r), extrema(b.z)
 
-function circumference(b::Boundary)
+@memoize LRU(maxsize = 5) function circumference(b::Boundary)
     p = b.points
     return sum(@inbounds norm(p[i+1] .- p[i]) for i=1:(length(p)-1))
 end
 
-function average(b::Boundary, F)
+@memoize LRU(maxsize = 5) function average(b::Boundary, F)
     p = b.points
     return sum(@inbounds norm(p[i+1] .- p[i])*(F(p[i][1],p[i][2])) for i=1:(length(p)-1))/circumference(b)
 end
 
 area(s::Boundary) = PolygonOps.area(s.points)
 
-function surface_area(b::Boundary)
+@memoize LRU(maxsize=cache_size) function surface_area(b::Boundary)
     p = b.points
     return 2pi*sum(@inbounds norm(p[i+1] .- p[i])*(p[i+1][1] + p[i][1])/2 for i=1:(length(p)-1))
 end
 
-function surface_area_average(b::Boundary, F)
+@memoize LRU(maxsize=cache_size) function surface_area_average(b::Boundary, F)
     A = surface_area(b)
     p = b.points
     return (2pi/A)*sum(@inbounds norm(p[i+1] .- p[i])*((p[i+1][1] + p[i][1])/2)*
                    (F(p[i+1][1],p[i+1][2]) + F(p[i][1],p[i][2]))/2 for i=1:(length(p)-1))
 end
 
-function surface_area_average(b::Boundary, F::Vector)
+@memoize LRU(maxsize=cache_size) function surface_area_average(b::Boundary, F::Vector)
     A = surface_area(b)
     p = b.points
     return (2pi/A)*sum(@inbounds norm(p[i+1] .- p[i])*((p[i+1][1] + p[i][1])/2)*
                        (F[i+1] + F[i])/2 for i=1:(length(p)-1))
 end
 
-function area_average(b::Boundary, F; dx=0.01, dy=0.01)
+@memoize LRU(maxsize=cache_size) function area_average(b::Boundary, F; dx=0.01, dy=0.01)
     x = range(extrema(b.r)...,step=dx) .+ dx/2
     y = range(extrema(b.z)...,step=dy) .+ dy/2
 
-    A = zero(dx)
-    for xx in x, yy in y
-        if in_boundary(b,(xx,yy))
-            A = A + F(xx,yy)*dx*dy
-        end
-    end
+    FId = [F(xi,yi)*in_boundary(b,xi,yi) for xi=x,yi=y]
+    A = trapz((x,y),FId)
+
     return A/area(b)
 end
 
-function area_average(b::Boundary, F::AbstractMatrix, x::AbstractRange, y::AbstractRange)
-    dx = step(x)
-    dy = step(y)
-    A = zero(eltype(x))
-    @inbounds for ix in eachindex(x), iy in eachindex(y)
-        if in_boundary(b, (x[ix],y[iy]))
-            A = A + F[ix,iy]*dx*dy
-        end
-    end
+@memoize LRU(maxsize=cache_size) function area_average(b::Boundary, F::AbstractMatrix, x::AbstractRange, y::AbstractRange)
+    Id = [in_boundary(b,xi,yi) for xi=x,yi=y]
+    A = trapz((x,y),F.*Id)
     return A/area(b)
 end
 
-function volume(b::Boundary; dx=0.01,dy=0.01)
+@memoize LRU(maxsize=cache_size) function volume(b::Boundary; dx=0.01,dy=0.01)
     x = range(extrema(b.r)...,step=dx) .+ dx/2
     y = range(extrema(b.z)...,step=dy) .+ dy/2
 
-    V = zero(eltype(x))
-    for xx in x, yy in y
-        if in_boundary(b, (xx,yy))
-            V = V + xx*dx*dy
-        end
-    end
+    JId = [xx*in_boundary(b,(xx,yy)) for xx=x,yy=y]
+
+    V = trapz((x,y),JId)
+
     return 2pi*V
 end
 
-function volume_average(b::Boundary, F; dx=0.01, dy=0.01)
+@memoize LRU(maxsize=cache_size) function volume_average(b::Boundary, F; dx=0.01, dy=0.01)
     x = range(extrema(b.r)...,step=dx) .+ dx/2
     y = range(extrema(b.z)...,step=dy) .+ dy/2
 
-    A = zero(dx)
-    for xx in x, yy in y
-        if in_boundary(b, (xx,yy))
-            A = A + F(xx,yy)*xx*dx*dy
-        end
-    end
+    FJId = [F(xx,yy)*xx*in_boundary(b,(xx,yy)) for xx=x,yy=y]
+
+    A = trapz((x,y),FJId)
+
     return 2pi*A/volume(b)
 end
 
-function volume_average(b::Boundary, F::AbstractMatrix, x::AbstractRange, y::AbstractRange)
-    dx = step(x)
-    dy = step(y)
-    A = zero(eltype(x))
-    @inbounds for ix in eachindex(x), iy in eachindex(y)
-        if in_boundary(b, (x[ix],y[iy]))
-            A = A + F[ix,iy]*x[ix]*dx*dy
-        end
-    end
+@memoize LRU(maxsize=cache_size) function volume_average(b::Boundary, F::AbstractMatrix, x::AbstractRange, y::AbstractRange)
+    FJId = [F[ix,iy]*xx[ix]*in_boundary(b,(xx[ix],yy[iy])) for ix in eachindex(x),yy in eachindex(y)]
+
+    A = trapz((x,y),FJId)
+
     return 2pi*A/volume(b)
 end

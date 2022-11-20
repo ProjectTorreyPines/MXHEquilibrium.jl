@@ -124,21 +124,7 @@ function plasma_boundary_psi(N::EFITEquilibrium; precision::Float64=1E-3, r::Uni
     end
 end
 
-_efit_plasma_boundary = Dict{EFITEquilibrium,Boundary}()
-function clear_plasma_boundary_cache!(N::EFITEquilibrium)
-    delete!(_efit_plasma_boundary,N)
-end
-
-function plasma_boundary(N::EFITEquilibrium; kwargs...)
-    if N in keys(_efit_plasma_boundary)
-        return _efit_plasma_boundary[N]
-    else
-        psi, bdry = plasma_boundary_psi(N; kwargs...)
-        return bdry
-    end
-end
-
-# add more cache clearing routines here
-function clear_cache!(N::EFITEquilibrium)
-    clear_plasma_boundary_cache!(N)
+@memoize LRU(maxsize=cache_size) function plasma_boundary(N::EFITEquilibrium; kwargs...)
+    psi, bdry = plasma_boundary_psi(N; kwargs...)
+    return bdry
 end

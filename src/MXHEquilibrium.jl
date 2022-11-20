@@ -6,13 +6,34 @@ using Interpolations
 using ForwardDiff
 using Zygote
 using StaticArrays
+using HCubature
 using Trapz
+
+using Memoize
+using LRUCache
 
 import PolygonOps
 import Contour
 import Optim
 
 const mu0 = 4*pi*1e-7
+
+cache_size = 5
+
+function set_cache_size!(N::Int)
+    m = @__MODULE__
+    cache = LRU(maxsize=cache_size)
+    global cache_size = N
+    for f in names(m)
+        cachename = Memoize.cache_name(f)
+        try
+            cache = getproperty(m,cachename)
+        catch e
+        finally
+            resize!(cache; maxsize=cache_size)
+        end
+    end
+end
 
 abstract type AbstractEquilibrium end
 export AbstractEquilibrium
@@ -48,7 +69,7 @@ export cylindrical_cocos, poloidal_cocos, cylindrical_cocos_indices, poloidal_co
 include("boundary.jl")
 export Boundary, PlasmaBoundary, FluxSurface, Wall, in_boundary, in_plasma, in_vessel
 export boundary, flux_surface, plasma_boundary
-export circumference, average, area, area_average, volume, volume_average
+export circumference, average, area, area_average, volume, volume_average, surface_area
 
 include("geometry.jl")
 export PlasmaGeometricParameters, plasma_geometry

@@ -342,7 +342,7 @@ Keyword Arguments:\\
 `x_point` - If diverted = true, then x_point is set to (R0*(1-1.1*δ*ϵ), -R0*1.1*κ*ϵ) else nothing\\
 `symmetric` - Is equilibrium up-down symmetric\\
 """
-function solovev(B0, S::PlasmaShape{T}, α, qstar;
+@memoize LRU(maxsize=cache_size) function solovev(B0, S::PlasmaShape{T}, α, qstar;
                  B0_dir = 1, Ip_dir = 1,
                  diverted::Bool = false,
                  x_point::Union{NTuple{2},Nothing} = (diverted ? scale_aspect(S,1.1)(3pi/2) : nothing),
@@ -498,8 +498,8 @@ function solovev(B0, S::PlasmaShape{T}, α, qstar;
     end
 
     if !symmetric
-        x,y = shape(S,N=100)
-        bdry = PlasmaBoundary(collect(zip(x./R0,(y .- Z0)./R0)))
+        x,y = shape(S,N=100, normed=true)
+        bdry = PlasmaBoundary(collect(zip(x,y)))
     else
         rlims, zlims = limits(S,x_point)
         xmin,xmax = rlims ./ R0
@@ -578,25 +578,10 @@ function psi_gradient(S::SolovevEquilibrium,r,z)
     return (S.psi0/R0)*SVector{2}(_solovev_psi_Dx(x,y,S.alpha,S.c; logx=logx), _solovev_psi_Dy(x,y,S.alpha,S.c;logx=logx))
 end
 
-_solovev_magnetic_axis = Dict{SolovevEquilibrium,NTuple{2}}()
-function clear_magnetic_axis_cache!(S::SolovevEquilibrium)
-    delete!(_solovev_magnetic_axis,S)
-end
-
-# add future cache clearing routines here
-function clear_cache!(S::SolovevEquilibrium)
-    clear_magnetic_axis_cache!(S)
-end
-
-function magnetic_axis(S::SolovevEquilibrium; x0 = (major_radius(shape(S)), elevation(shape(S))))
-    if S in keys(_solovev_magnetic_axis)
-        return _solovev_magnetic_axis[S]
-    else
-        sigma_psi = sign(S(x0[1],x0[2]))
-        res = Optim.optimize(x->-sigma_psi*S(x[1],x[2]), x -> -sigma_psi*psi_gradient(S,x[1],x[2]), collect(x0), inplace=false)
-        axis = (res.minimizer[1],res.minimizer[2])
-        _solovev_magnetic_axis[S] = axis
-    end
+@memoize LRU(maxsize=cache_size) function magnetic_axis(S::SolovevEquilibrium; x0 = (major_radius(shape(S)), elevation(shape(S))))
+    sigma_psi = sign(S(x0[1],x0[2]))
+    res = Optim.optimize(x->-sigma_psi*S(x[1],x[2]), x -> -sigma_psi*psi_gradient(S,x[1],x[2]), collect(x0), inplace=false)
+    axis = (res.minimizer[1],res.minimizer[2])
     return axis
 end
 

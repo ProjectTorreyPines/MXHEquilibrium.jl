@@ -51,4 +51,16 @@ S = MillerShape(R0,Z0,ϵ,κ,δ)
         @test isapprox(MXH.c, fMXH.c, rtol=1e-1)
         @test isapprox(MXH.s, fMXH.s, rtol=1e-1)
     end
+
+    @testset "Integration" begin
+        g = readg((@__DIR__)*"/g150219.03200")
+        M = efit(g,clockwise_phi=false)
+        efit_bdry = plasma_boundary(M)
+        mxh = fit(efit_bdry,MXHShape(5))
+        mxh_bdry = plasma_boundary(mxh,N=1000)
+        @test circumference(mxh,rtol=1e-6) ≈ circumference(mxh_bdry) atol=1e-3
+        @test area(mxh,rtol=1e-6) ≈ area(mxh_bdry) atol=1e-3
+        @test surface_area(mxh,rtol=1e-6) ≈ surface_area(mxh_bdry) atol=1e-3
+        @test volume(mxh,rtol=1e-6) ≈ volume(mxh_bdry,dx=0.001,dy=0.001) atol=1e-3
+    end
 end

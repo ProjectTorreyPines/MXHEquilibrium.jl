@@ -7,6 +7,130 @@ function Base.copy(S::T) where T <: PlasmaShape
     return SS
 end
 
+function (S::PlasmaShape)(ρ::T,θ::T,ζ::T) where T<:Number
+    ρ > minor_radius(S) && throw(DomainError("ρ is larger than the minor radius"))
+    r, z = S(ρ,θ)
+    x = r*cos(ζ)
+    y = r*sin(ζ)
+    return x,y,z
+end
+
+function (S::PlasmaShape)(x::T) where T <:AbstractVector
+    N = length(x)
+    if N == 2
+        return collect(S(x[1],x[2]))
+    elseif N == 3
+        return collect(S(x[1],x[2],x[3]))
+    else
+        throw(ArgumentError("Length of array can only be 2 or 3"))
+    end
+end
+
+"""
+3 element u: Volume element
+2 element u: Internal Area element
+"""
+function dVA(S::PlasmaShape,u::T) where T<:AbstractVector
+    @assert length(u) in (2,3)
+    abs(det(ForwardDiff.jacobian(S,u)))
+end
+
+"""
+Surface area element of a plasma shape at a given position
+"""
+function dS(S::PlasmaShape,u::T) where T<:AbstractVector{R} where R
+    N = length(u)
+    @assert N == 2
+    d1 = zeros(R,3)
+    d2 = zeros(R,3)
+    r = minor_radius(S)
+    for i=1:3
+        d1[i] = ForwardDiff.derivative(t->S([r,t,u[2]])[i], u[1])
+        d2[i] = ForwardDiff.derivative(t->S([r,u[1],t])[i], u[2])
+    end
+    return norm(cross(d1,d2))
+end
+
+"""
+Line element of a a plasma shape at a given position
+"""
+function dL(S::PlasmaShape,u::T) where T<:Number
+    d = zeros(2)
+    r = minor_radius(S)
+    for i=1:2
+        d[i] = ForwardDiff.derivative(t->S([r,t])[i], u)
+    end
+    return norm(d)
+end
+
+"""
+Integrate a function F which takes a scalar or vector over the given plasma shape
+
+Example:
+
+```
+I = integrate(x->1,S,:line,(0,2pi)) # circumference
+I = integrate(x->1,S,:area,(0,minor_radius(S)),(0,2pi)) # area
+I = integrate(x->1,S,:surface,(0,2pi),(0,2pi)) # surface area
+I = integrate(x->1,S,:volume,(0,minor_radius(S)),(0,2pi),(0,2pi))
+```
+"""
+function integrate(f::Function, S::PlasmaShape, type::Symbol, bds::Vararg{NTuple{2},N}; kwargs...) where N
+    kws = pairs((rtol=1e-3, atol=1e-3, kwargs...))
+    if N == 1 && type == :line
+        θ_min, θ_max = bds[1]
+        (F,err) = hquadrature(x->f(x)*dL(S,x),θ_min,θ_max; kws...)
+    elseif N == 2 && type == :surface
+        θ_min, θ_max = bds[1]
+        ζ_min, ζ_max = bds[2]
+        (F,err) = hcubature(x->f(x)*dS(S,x),(θ_min,ζ_min),(θ_max,ζ_max); kws...)
+    elseif N == 2 && type == :area
+        r_min, r_max = bds[1]
+        θ_min, θ_max = bds[2]
+        (F,err) = hcubature(x->f(x)*dVA(S,x),(r_min, θ_min),(r_max, θ_max); kws...)
+    elseif N == 3 && type == :volume
+        r_min, r_max = bds[1]
+        θ_min, θ_max = bds[2]
+        ζ_min, ζ_max = bds[3]
+        (F,err) = hcubature(x->f(x)*dVA(S,x),(r_min,θ_min,ζ_min),(r_max,θ_max,ζ_max); kws...)
+    else
+        throw(ArgumentError("Unsupported Integral Type: $type : Supported types: :line ∫dθ, :area ∬drdθ, :surface ∬dθdζ, :volume ∭drdθdζ"))
+    end
+
+    return F
+end
+
+@memoize LRU(maxsize=cache_size) function circumference(S::PlasmaShape; kwargs...)
+    integrate(x->1, S, :line, (0.0,2pi); kwargs...)
+end
+
+@memoize LRU(maxsize=cache_size) function area(S::PlasmaShape; kwargs...)
+    integrate(x->1, S, :area, (0.0,minor_radius(S)), (0.0,2pi); kwargs...)
+end
+
+@memoize LRU(maxsize=cache_size) function surface_area(S::PlasmaShape; kwargs...)
+    integrate(x->1,S,:surface, (0.0,2pi), (0.0,2pi); kwargs...)
+end
+
+@memoize LRU(maxsize=cache_size) function volume(S::PlasmaShape; kwargs...)
+    integrate(x->1, S, :volume, (0.0,minor_radius(S)), (0.0,2pi), (0.0,2pi); kwargs...)
+end
+
+@memoize LRU(maxsize=cache_size) function average(f::Function, S::PlasmaShape, type::Symbol; kwargs...)
+
+    if type == :line
+        F_bar = integrate(f, S, :line, (0.0,2pi); kwargs...)/circumference(S; kwargs...)
+    elseif type == :surface
+        F_bar = integrate(f, S, :surface, (0.0,2pi),(0.0,2pi); kwargs...)/surface_area(S; kwargs...)
+    elseif type == :area
+        F_bar = integrate(f, S, :area, (0.0, minor_radius(S)), (0.0, 2pi); kwargs...)/area(S; kwargs...)
+    elseif type == :volume
+        F_bar = integrate(f, S, :volume, (0.0, minor_radius(S)), (0.0, 2pi), (0, 2pi); kwargs...)/volume(S; kwargs...)
+    else
+        throw(ArgumentError("Unsupported Average Type: $type : Supported types: :line ∫dθ, :area ∬drdθ, :surface ∬dθdζ, :volume ∭drdθdζ"))
+    end
+end
+
 function limits(s::PlasmaShape, x_point=nothing)
     xlims = (0.8*s(pi)[1], 1.2*s(0.0)[1])
     ylims = (1.2*s(3pi/2)[2], 1.2*s(pi/2)[2])
@@ -17,14 +141,9 @@ function limits(s::PlasmaShape, x_point=nothing)
     return xlims, ylims
 end
 
-function plasma_boundary(S::PlasmaShape; N=100)
-    x,y = shape(S,N=N)
+function plasma_boundary(S::PlasmaShape; kwargs...)
+    x,y = shape(S; kwargs...)
     return PlasmaBoundary(collect(zip(x[1:end-1],y[1:end-1])))
-end
-
-function circumference(S::PlasmaShape; N=100)
-    bdry = plasma_boundary(S, N=N)
-    return circumference(bdry)
 end
 
 function scale_aspect(S::PlasmaShape,s)
@@ -94,7 +213,7 @@ function m_rz(r, θ, R0, Z0, κ, δ)
     return x, y
 end
 
-function shape(S::MillerShape; N=100)
+function shape(S::MillerShape; N=100, normed=false)
     r = S.ϵ*S.R0
 
     x = zeros(N)
@@ -103,16 +222,20 @@ function shape(S::MillerShape; N=100)
     @inbounds for i=1:N
         x[i], y[i] = m_rz(r, τ[i], S.R0, S.Z0, S.κ, S.δ)
     end
-    return x, y
+    if !normed
+        return x, y
+    else
+        return x/S.R0, (y - S.Z0)/S.R0
+    end
 end
 
-function (S::MillerShape)(θ)
+function (S::MillerShape)(θ::T) where T<:Number
     r = S.ϵ*S.R0
     x, y = m_rz(r, θ, S.R0, S.Z0, S.κ, S.δ)
     return x,y
 end
 
-function (S::MillerShape)(r,θ)
+function (S::MillerShape)(r::T,θ::T) where T<:Number
     x, y = m_rz(r, θ, S.R0, S.Z0, S.κ, S.δ)
     return x,y
 end
@@ -172,7 +295,7 @@ function am_rz(r, θ, R0, Z0, κ, δl, δu)
     return x, y
 end
 
-function shape(S::AMShape; N=100)
+function shape(S::AMShape; N=100, normed=false)
     r = S.ϵ*S.R0
 
     x = zeros(N)
@@ -181,16 +304,20 @@ function shape(S::AMShape; N=100)
     @inbounds for i=1:N
         x[i], y[i] = am_rz(r, τ[i], S.R0, S.Z0, S.κ, S.δl, S.δu)
     end
-    return x, y
+    if !normed
+        return x, y
+    else
+        return x/S.R0, (y - S.Z0)/S.R0
+    end
 end
 
-function (S::AMShape)(θ)
+function (S::AMShape)(θ::T) where T<:Number
     r = S.ϵ*S.R0
     x, y = am_rz(r, θ, S.R0, S.Z0, S.κ, S.δl, S.δu)
     return x,y
 end
 
-function (S::AMShape)(r,θ)
+function (S::AMShape)(r::T,θ::T) where T<:Number
     x, y = am_rz(r, θ, S.R0, S.Z0, S.κ, S.δl, S.δu)
     return x,y
 end
@@ -251,7 +378,7 @@ function tm_rz(r, θ, R0, Z0, κ, δ, ζ)
     return x, y
 end
 
-function shape(S::TMShape; N=100)
+function shape(S::TMShape; N=100, normed=false)
     r = S.ϵ*S.R0
 
     x = zeros(N)
@@ -260,16 +387,20 @@ function shape(S::TMShape; N=100)
     @inbounds for i=1:N
         x[i], y[i] = tm_rz(r, τ[i], S.R0, S.Z0, S.κ, S.δ, S.ζ)
     end
-    return x, y
+    if !normed
+        return x, y
+    else
+        return x/S.R0, (y - S.Z0)/S.R0
+    end
 end
 
-function (S::TMShape)(θ)
+function (S::TMShape)(θ::T) where T<:Number
     r = S.ϵ*S.R0
     x, y = tm_rz(r, θ, S.R0, S.Z0, S.κ, S.δ, S.ζ)
     return x,y
 end
 
-function (S::TMShape)(r,θ)
+function (S::TMShape)(r::T,θ::T) where T<:Number
     x, y = tm_rz(r, θ, S.R0, S.Z0, S.κ, S.δ, S.ζ)
     return x,y
 end
@@ -390,7 +521,7 @@ function mxh_rz(r, θ, R0, Z0, κ, c0, c::SVector{N}, s::SVector{N}) where N
     return x, y
 end
 
-function shape(S::MXHShape; N=100)
+function shape(S::MXHShape; N=100, normed=false)
     r = S.ϵ*S.R0
 
     x = zeros(N)
@@ -399,16 +530,19 @@ function shape(S::MXHShape; N=100)
     @inbounds for i=1:N
         x[i], y[i] = mxh_rz(r, θ[i], S.R0, S.Z0, S.κ, S.c0, S.c, S.s)
     end
-
-    return x, y
+    if !normed
+        return x, y
+    else
+        return x/S.R0, (y - S.Z0)/S.R0
+    end
 end
 
-function (S::MXHShape)(θ)
+function (S::MXHShape)(θ::T) where T<:Number
     r = S.ϵ*S.R0
     return mxh_rz(r, θ, S.R0, S.Z0, S.κ, S.c0, S.c, S.s)
 end
 
-function (S::MXHShape)(r,θ)
+function (S::MXHShape)(r::T,θ::T) where T<:Number
     return mxh_rz(r, θ, S.R0, S.Z0, S.κ, S.c0, S.c, S.s)
 end
 
@@ -522,22 +656,25 @@ function luce_rz(r, θ, R0, Z0, Zrm, κ::NTuple{2}, δ::NTuple{2}, ζ::NTuple{4}
     return R, Z
 end
 
-function shape(S::LuceShape; N=100)
+function shape(S::LuceShape; N=100, normed=false)
     x = zeros(N)
     y = zeros(N)
     θ = range(0,2pi,length=N)
     @inbounds for i=1:N
         x[i], y[i] = luce_rz(S.r, θ[i], S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ)
     end
-
-    return x, y
+    if !normed
+        return x, y
+    else
+        return x/S.R0, (y - S.Z0)/S.R0
+    end
 end
 
-function (S::LuceShape)(θ)
+function (S::LuceShape)(θ::T) where T<:Number
     return luce_rz(S.r, θ, S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ)
 end
 
-function (S::LuceShape)(r,θ)
+function (S::LuceShape)(r::T,θ::T) where T<:Number
     return luce_rz(r, θ, S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ)
 end
 
