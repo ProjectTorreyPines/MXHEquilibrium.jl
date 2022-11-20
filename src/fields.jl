@@ -221,21 +221,21 @@ function beta(M::AbstractEquilibrium)
     S = shape(M)
     p_bar = average(x->pressure(M,M(S(x[1],x[2])...)),S,:volume)
     B_bar = average(x->norm(Bfield(M,S(x[1],x[2])...)),S,:volume)
-    return p_bar/(B_bar^2 / (2*mu0))
+    return 100*p_bar/(B_bar^2 / (2*mu0))
 end
 
 function beta_p(M::AbstractEquilibrium)
     S = shape(M)
     p_bar = average(x->pressure(M,M(S(x[1],x[2])...)),S,:volume)
     Bp_bar = average(x->poloidal_Bfield(M,S(x[1],x[2])...),S,:volume)
-    return p_bar/(Bp_bar^2 / (2*mu0))
+    return 100*p_bar/(Bp_bar^2 / (2*mu0))
 end
 
 function beta_t(M::AbstractEquilibrium)
     S = shape(M)
     p_bar = average(x->pressure(M,M(S(x[1],x[2])...)),S,:volume)
     Bt_bar = average(x->Bfield(M,S(x[1],x[2])...)[2],S,:volume)
-    return p_bar/(Bt_bar^2 / (2*mu0))
+    return 100*p_bar/(Bt_bar^2 / (2*mu0))
 end
 
 function beta_n(M::AbstractEquilibrium)

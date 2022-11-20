@@ -623,10 +623,11 @@ electric_potential(S::SolovevEquilibrium,psi) = zero(psi)
 
 electric_potential_gradient(S::SolovevEquilibrium,psi) = zero(psi)
 
-beta_p(M::SolovevEquilibrium) = M.beta_p
-beta_t(M::SolovevEquilibrium) = M.beta_t
-
 # === Special Cases ===
+
+beta_p(M::SolovevEquilibrium) = 100*M.beta_p
+beta_t(M::SolovevEquilibrium) = 100*M.beta_t
+beta(M::SolovevEquilibrium) = inv(inv(beta_p(M)) + inv(beta_t(M)))
 
 function curlB(S::SolovevEquilibrium, r, z)
     # curlB = mu0*J
