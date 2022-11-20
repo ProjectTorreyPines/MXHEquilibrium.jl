@@ -75,7 +75,7 @@ I = integrate(x->1,S,:surface,(0,2pi),(0,2pi)) # surface area
 I = integrate(x->1,S,:volume,(0,minor_radius(S)),(0,2pi),(0,2pi))
 ```
 """
-function integrate(f::Function, S::PlasmaShape, type::Symbol, bds::Vararg{NTuple{2},N}; kwargs...) where N
+function integrate(f::Function, S::PlasmaShape, type::Symbol, bds::Vararg{NTuple{2,Number},N}; kwargs...) where N
     kws = pairs((rtol=1e-3, atol=1e-3, kwargs...))
     if N == 1 && type == :line
         θ_min, θ_max = bds[1]
