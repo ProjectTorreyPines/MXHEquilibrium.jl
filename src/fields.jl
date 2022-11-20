@@ -88,10 +88,10 @@ function Jfield(M::T, x, y, z; kwargs...) where T<:AbstractEquilibrium
     return J_xyz
 end
 
-function poloidal_Jfield(M::T, r, z) where T<:AbstractEquilibrium
+function poloidal_Jfield(M::T, r, z; kwargs...) where T<:AbstractEquilibrium
     rmaxis, zmaxis = magnetic_axis(M)
     cc = cocos(M)
-    B = Jfield(M, r, z)
+    J = Jfield(M, r, z; kwargs...)
 
     ir, iphi, iz = cylindrical_cocos_indices(cc)
     sign_theta = cc.sigma_RpZ*cc.sigma_rhotp # + CW, - CCW
@@ -212,27 +212,43 @@ end
 
 function plasma_current(M::AbstractEquilibrium)
     cc = cocos(M)
+    S = shape(M)
+    Ip = cc.sigma_rhotp * integrate(x->poloidal_Bfield(M,S(x)...),S,:line,(0.0,2pi))
+    return Ip/mu0
+end
 
-    bdry = boundary(M)
-    dr = diff(bdry.r)
-    dz = diff(bdry.z)
+function beta(M::AbstractEquilibrium)
+    S = shape(M)
+    p_bar = average(x->pressure(M,M(S(x[1],x[2])...)),S,:volume)
+    B_bar = average(x->norm(Bfield(M,S(x[1],x[2])...)),S,:volume)
+    return p_bar/(B_bar^2 / (2*mu0))
+end
 
-    ll = vcat(0,cumsum(hypot.(dr, dz)))
+function beta_p(M::AbstractEquilibrium)
+    S = shape(M)
+    p_bar = average(x->pressure(M,M(S(x[1],x[2])...)),S,:volume)
+    Bp_bar = average(x->poloidal_Bfield(M,S(x[1],x[2])...),S,:volume)
+    return p_bar/(Bp_bar^2 / (2*mu0))
+end
 
-    Bp = poloidal_Bfield.(M, bdry.r, bdry.z)
-
-    Ip = cc.sigma_rhotp * trapz(ll, Bp) / mu0
-
-    return Ip
+function beta_t(M::AbstractEquilibrium)
+    S = shape(M)
+    p_bar = average(x->pressure(M,M(S(x[1],x[2])...)),S,:volume)
+    Bt_bar = average(x->Bfield(M,S(x[1],x[2])...)[2],S,:volume)
+    return p_bar/(Bt_bar^2 / (2*mu0))
 end
 
 function beta_n(M::AbstractEquilibrium)
     Ip = plasma_current(M)*1e-6
-    bdry = boundary(M)
-    rmin, rmax = extrema(bdry.r)
-    a = (rmax - rmin)/2
-    beta_n = beta_t(M) / abs(Ip / a / M.B0) * 100
-    return beta_n
+#    bdry = plasma_boundary(M)
+#    rmin, rmax = extrema(bdry.r)
+#    a = (rmax - rmin)/2
+#    beta_n = beta_t(M) / abs(Ip / a / M.B0) * 100
+    β = beta(M)
+    a = minor_radius(shape(M))
+    Bt = Bfield(M,magnetic_axis(M)...)[2]
+    βn = β*(a*Bt)/Ip
+    return βn
 end
 
 function gradB_autodiff(M::AbstractEquilibrium, r, z)

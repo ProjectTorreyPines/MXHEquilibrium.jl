@@ -60,7 +60,7 @@ plasma_boundary_psi(M::AbstractEquilibrium) = psi_limits(M)[2]
 # Equilibrium API
 export magnetic_axis, limits, psi_limits, plasma_boundary_psi, psi_gradient, electric_potential, electric_potential_gradient
 export pressure, poloidal_current, pressure_gradient, poloidal_current_gradient, safety_factor, B0Ip_sign
-export plasma_current, beta_n, beta_p, beta_t, psi_range, rho_p, toroidal_flux
+export plasma_current, beta, beta_n, beta_p, beta_t, psi_range, rho_p, toroidal_flux
 
 include("cocos.jl")
 export COCOS, cocos, check_cocos, identify_cocos, transform_cocos

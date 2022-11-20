@@ -161,3 +161,8 @@ function fit(bdry::Boundary, S::LShape; kwargs...)
     G = plasma_geometry(bdry)
     return LuceShape(G)
 end
+
+@memoize LRU(maxsize=cache_size) function shape(M::AbstractEquilibrium; N=10)
+    bdry = plasma_boundary(M)
+    return fit(bdry,MXHShape(N))
+end

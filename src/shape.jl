@@ -125,7 +125,7 @@ end
     elseif type == :area
         F_bar = integrate(f, S, :area, (0.0, minor_radius(S)), (0.0, 2pi); kwargs...)/area(S; kwargs...)
     elseif type == :volume
-        F_bar = integrate(f, S, :volume, (0.0, minor_radius(S)), (0.0, 2pi), (0, 2pi); kwargs...)/volume(S; kwargs...)
+        F_bar = integrate(f, S, :volume, (0.0, minor_radius(S)), (0.0, 2pi), (0.0, 2pi); kwargs...)/volume(S; kwargs...)
     else
         throw(ArgumentError("Unsupported Average Type: $type : Supported types: :line ∫dθ, :area ∬drdθ, :surface ∬dθdζ, :volume ∭drdθdζ"))
     end
