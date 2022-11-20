@@ -225,7 +225,7 @@ function shape(S::MillerShape; N=100, normed=false)
     if !normed
         return x, y
     else
-        return x/S.R0, (y - S.Z0)/S.R0
+        return x/S.R0, (y .- S.Z0)/S.R0
     end
 end
 
@@ -307,7 +307,7 @@ function shape(S::AMShape; N=100, normed=false)
     if !normed
         return x, y
     else
-        return x/S.R0, (y - S.Z0)/S.R0
+        return x/S.R0, (y .- S.Z0)/S.R0
     end
 end
 
@@ -390,7 +390,7 @@ function shape(S::TMShape; N=100, normed=false)
     if !normed
         return x, y
     else
-        return x/S.R0, (y - S.Z0)/S.R0
+        return x/S.R0, (y .- S.Z0)/S.R0
     end
 end
 
@@ -533,7 +533,7 @@ function shape(S::MXHShape; N=100, normed=false)
     if !normed
         return x, y
     else
-        return x/S.R0, (y - S.Z0)/S.R0
+        return x/S.R0, (y .- S.Z0)/S.R0
     end
 end
 
@@ -666,7 +666,7 @@ function shape(S::LuceShape; N=100, normed=false)
     if !normed
         return x, y
     else
-        return x/S.R0, (y - S.Z0)/S.R0
+        return x/S.R0, (y .- S.Z0)/S.R0
     end
 end
 
