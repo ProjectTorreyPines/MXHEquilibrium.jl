@@ -53,8 +53,6 @@ pressure_gradient(M::AbstractEquilibrium, psi) = _not_implemented(M)
 poloidal_current_gradient(M::AbstractEquilibrium, psi) = _not_implemented(M)
 cocos(M::AbstractEquilibrium) = _not_implemented(M)
 B0Ip_sign(M::AbstractEquilibrium) = _not_implemented(M)
-beta_p(M::AbstractEquilibrium) = _not_implemented(M)
-beta_t(M::AbstractEquilibrium) = _not_implemented(M)
 plasma_boundary_psi(M::AbstractEquilibrium) = psi_limits(M)[2]
 
 # Equilibrium API
@@ -111,4 +109,6 @@ export read_geqdsk
 include("transp_io.jl")
 export transp_potential!
 
+include("mesh.jl")
+export create_mesh
 end # module
