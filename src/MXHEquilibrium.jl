@@ -12,6 +12,8 @@ using Trapz
 using Memoize
 using LRUCache
 
+using MeshTools
+
 import PolygonOps
 import Contour
 import Optim
@@ -109,6 +111,4 @@ export read_geqdsk
 include("transp_io.jl")
 export transp_potential!
 
-include("mesh.jl")
-export create_mesh
 end # module
