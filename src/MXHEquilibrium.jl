@@ -18,6 +18,9 @@ import PolygonOps
 import Contour
 import Optim
 
+using CoordinateConventions
+import CoordinateConventions: cocos, identify_cocos, check_cocos, transform_cocos
+
 const mu0 = 4*pi*1e-7
 
 cache_size = 5

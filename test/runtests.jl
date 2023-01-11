@@ -2,6 +2,7 @@ using Test
 
 using ForwardDiff
 using MXHEquilibrium
+using CoordinateConventions
 using EFIT
 
 

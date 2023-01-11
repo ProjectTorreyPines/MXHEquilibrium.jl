@@ -11,7 +11,7 @@ B0 = 5.3
 MS = MillerShape(R0,Z0,ϵ,κ,δ)
 alpha = -0.155
 qstar = 1.57
-β_t = 0.05
+β_t = 5.02
 
 S1 = solovev(B0, MS, alpha, qstar, B0_dir=1, Ip_dir=1)
 S2 = solovev(B0, MS, alpha, qstar, B0_dir=-1, Ip_dir=1)
