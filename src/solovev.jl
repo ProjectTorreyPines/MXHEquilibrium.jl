@@ -274,8 +274,8 @@ Fields:\\
 `alpha` - constant relating beta regime (α)\\
 `qstar` - Kink safety factor\\
 `psi0` - Poloidal flux normalization (ψ₀)\\
-`beta_p` - Poloidal beta\\
-`beta_t` - Toroidal beta\\
+`beta_p` - Theoretical Poloidal beta\\
+`beta_t` - Theoretical Toroidal beta\\
 `c` - Coefficients for Solov'ev polynomials\\
 `diverted` - If true then equilibrium has one or more x-points\\
 `symmetric` - If true then equilibrium is up-down symmetric\\
@@ -625,9 +625,9 @@ electric_potential_gradient(S::SolovevEquilibrium,psi) = zero(psi)
 
 # === Special Cases ===
 
-beta_p(M::SolovevEquilibrium) = 100*M.beta_p
-beta_t(M::SolovevEquilibrium) = 100*M.beta_t
-beta(M::SolovevEquilibrium) = inv(inv(beta_p(M)) + inv(beta_t(M)))
+beta_p(M::SolovevEquilibrium; generic=false) = generic ? beta_p_generic(M) : 100*M.beta_p
+beta_t(M::SolovevEquilibrium; generic=false) = generic ? beta_t_generic(M) : 100*M.beta_t
+beta(M::SolovevEquilibrium; generic=false) = generic ? beta_generic(M) : inv(inv(beta_p(M)) + inv(beta_t(M)))
 
 function curlB(S::SolovevEquilibrium, r, z)
     # curlB = mu0*J

@@ -100,6 +100,21 @@ function integrate(f::Function, S::PlasmaShape, type::Symbol, bds::Vararg{NTuple
     return F
 end
 
+@memoize LRU(maxsize=cache_size) function integrate(f::Function, S::PlasmaShape, type::Symbol; kwargs...)
+
+    if type == :line
+        F_bar = integrate(f, S, :line, (0.0,2pi); kwargs...)
+    elseif type == :surface
+        F_bar = integrate(f, S, :surface, (0.0,2pi),(0.0,2pi); kwargs...)
+    elseif type == :area
+        F_bar = integrate(f, S, :area, (0.0, minor_radius(S)), (0.0, 2pi); kwargs...)
+    elseif type == :volume
+        F_bar = integrate(f, S, :volume, (0.0, minor_radius(S)), (0.0, 2pi), (0.0, 2pi); kwargs...)
+    else
+        throw(ArgumentError("Unsupported Integral Type: $type : Supported types: :line ∫dθ, :area ∬drdθ, :surface ∬dθdζ, :volume ∭drdθdζ"))
+    end
+end
+
 @memoize LRU(maxsize=cache_size) function circumference(S::PlasmaShape; kwargs...)
     integrate(x->1, S, :line, (0.0,2pi); kwargs...)
 end

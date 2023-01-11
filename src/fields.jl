@@ -217,39 +217,39 @@ function plasma_current(M::AbstractEquilibrium)
     return Ip/mu0
 end
 
-function beta(M::AbstractEquilibrium)
+function beta_generic(M::T) where T<:AbstractEquilibrium
     S = shape(M)
     p_bar = average(x->pressure(M,M(S(x[1],x[2])...)),S,:volume)
     B_bar = average(x->norm(Bfield(M,S(x[1],x[2])...)),S,:volume)
     return 100*p_bar/(B_bar^2 / (2*mu0))
 end
+beta(M::AbstractEquilibrium) = beta_generic(M)
 
-function beta_p(M::AbstractEquilibrium)
+function beta_p_generic(M::T) where T<:AbstractEquilibrium
     S = shape(M)
     p_bar = average(x->pressure(M,M(S(x[1],x[2])...)),S,:volume)
     Bp_bar = average(x->poloidal_Bfield(M,S(x[1],x[2])...),S,:volume)
     return 100*p_bar/(Bp_bar^2 / (2*mu0))
 end
+beta_p(M::AbstractEquilibrium) = beta_p_generic(M)
 
-function beta_t(M::AbstractEquilibrium)
+function beta_t_generic(M::T) where T<:AbstractEquilibrium
     S = shape(M)
     p_bar = average(x->pressure(M,M(S(x[1],x[2])...)),S,:volume)
     Bt_bar = average(x->Bfield(M,S(x[1],x[2])...)[2],S,:volume)
     return 100*p_bar/(Bt_bar^2 / (2*mu0))
 end
+beta_t(M::AbstractEquilibrium) = beta_t_generic(M)
 
-function beta_n(M::AbstractEquilibrium)
+function beta_n_generic(M::T) where T<:AbstractEquilibrium
     Ip = plasma_current(M)*1e-6
-#    bdry = plasma_boundary(M)
-#    rmin, rmax = extrema(bdry.r)
-#    a = (rmax - rmin)/2
-#    beta_n = beta_t(M) / abs(Ip / a / M.B0) * 100
     β = beta(M)
     a = minor_radius(shape(M))
     Bt = Bfield(M,magnetic_axis(M)...)[2]
     βn = β*(a*Bt)/Ip
     return βn
 end
+beta_n(M::AbstractEquilibrium) = beta_n_generic(M)
 
 function gradB_autodiff(M::AbstractEquilibrium, r, z)
     gB_rz = ForwardDiff.gradient(x->norm(Bfield(M,x[1],x[2])), SVector{2}(r,z))
