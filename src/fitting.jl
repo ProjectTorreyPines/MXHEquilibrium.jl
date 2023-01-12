@@ -21,7 +21,7 @@ function MXH_angles(bdry::Boundary; n_interp=0, debug=false)
     z_s = copy(bdry.z)
 
     _reorder!(r_s,z_s,R0,Z0) # put start in first quadrant
-    
+
     θ = zero(r_s)
     Δθᵣ = zero(r_s)
     th = 0.0
@@ -32,7 +32,7 @@ function MXH_angles(bdry::Boundary; n_interp=0, debug=false)
         thr_old = thr
 
         aa = clamp((z_s[j] - Z0)/(κ*r) ,-1,1)
-        th = asin(aa) 
+        th = asin(aa)
 
         bb = clamp((r_s[j] - R0) / r,-1,1)
         thr = acos(bb)
@@ -92,7 +92,7 @@ function MXH_coeffs(θ::AbstractVector{T},θ_r::AbstractVector{T};N=7) where T
         Fn = cos.(n .* θ)
         cs[n] = MXH_moment(θ, θ_r, Fn)
     end
-    
+
     for n=1:N
         Fn = sin.(n .* θ)
         ss[n] = MXH_moment(θ, θ_r, Fn)
@@ -101,17 +101,17 @@ function MXH_coeffs(θ::AbstractVector{T},θ_r::AbstractVector{T};N=7) where T
 end
 
 function MXH_parameters(bdry::Boundary; N=7, kwargs...)
-    
+
     G = plasma_geometry(bdry)
     R0 = G.R0
     Z0 = G.Z0
     r = G.r
     κ = sum(G.κ)/2
-    
+
     θ, θr = MXH_angles(bdry; kwargs...)
-    
+
     c0, c, s = MXH_coeffs(θ, θr; N=N)
-    
+
     return R0, Z0, r/R0, κ, c0, c, s
 end
 

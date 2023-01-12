@@ -57,7 +57,7 @@ function intersection(a, b, origin, p1, p2)
 end
 
 function intersection(B::Boundary, p1, p2; tol=1e-6)
-    
+
     p1_in = in_boundary(B,p1)
     p2_in = in_boundary(B,p2)
 
@@ -115,17 +115,14 @@ function quadrant_squareness(bdry,A,B,p1,p2,quad)
     return (L_OD - L_OC)/L_CE
 end
 
-
 function plasma_geometry(bdry::Boundary)
-    rmin, ir_min = findmin(bdry.r)
-    rmax, ir_max = findmax(bdry.r)
-    zmin, iz_min = findmin(bdry.z)
-    zmax, iz_max = findmax(bdry.z)
-    
-    r_zmax = bdry.r[iz_max]
-    r_zmin = bdry.r[iz_min]
-    z_rmax = bdry.z[ir_max]
-    z_rmin = bdry.z[ir_min]
+
+    outer,top,inner,bottom = boundary_extrema(bdry)
+
+    rmax, z_rmax = outer
+    r_zmax, zmax = top
+    rmin, z_rmin = inner
+    r_zmin, zmin = bottom
 
     r = (rmax - rmin)/2
     κ = (zmax - zmin)/(2*r)
@@ -167,4 +164,8 @@ end
 
 function plasma_geometry(M::AbstractEquilibrium)
     return plasma_geometry(shape(M))
+end
+
+function flux_surface_geometry(bdry::Boundary)
+    return plasma_geometry(bdry)
 end

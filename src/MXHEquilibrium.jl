@@ -71,11 +71,11 @@ export cylindrical_cocos, poloidal_cocos, cylindrical_cocos_indices, poloidal_co
 
 include("boundary.jl")
 export Boundary, PlasmaBoundary, FluxSurface, Wall, in_boundary, in_plasma, in_vessel
-export boundary, flux_surface, plasma_boundary
+export boundary, flux_surface, plasma_boundary, boundary_extrema
 export circumference, average, area, area_average, volume, volume_average, surface_area
 
 include("geometry.jl")
-export PlasmaGeometricParameters, plasma_geometry
+export PlasmaGeometricParameters, plasma_geometry, flux_surface_geometry
 
 include("shape.jl")
 export PlasmaShape, MillerShape, TurnbullMillerShape, MillerExtendedHarmonicShape, LuceShape

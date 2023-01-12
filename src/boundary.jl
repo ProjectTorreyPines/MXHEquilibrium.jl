@@ -46,6 +46,61 @@ in_boundary(b::Boundary,x,y) = in_boundary(b,(x,y))
 const in_vessel = in_boundary
 const in_plasma = in_boundary
 
+"""
+    outer, top, inner, bottom = boundary_extrema(bdry; interp=true)
+
+Returns the outermost, top, innermost, and bottom points on the boundary. Defaults to using interpolation to find extrema
+"""
+function boundary_extrema(bdry::Boundary; interp=true)
+
+    if interp
+        t = range(0,1,length=length(bdry.points))
+        rz = hcat(bdry.r,bdry.z)
+        itp = scale(Interpolations.interpolate(rz, (BSpline(Cubic(Periodic(OnGrid()))), NoInterp())), t, 1:2)
+
+        t0 = t[argmax(bdry.r)]
+        res = Optim.optimize(x -> -itp(x[1],1), [0.0], [1.0], [t0], Optim.Fminbox(Optim.GradientDescent()))
+        rmax = -Optim.minimum(res)
+        ir_max = Optim.minimizer(res)[1]
+        z_rmax = itp(ir_max,2)
+
+        t0 = t[argmin(bdry.r)]
+        res = Optim.optimize(x -> itp(x[1],1), [0.0], [1.0], [t0], Optim.Fminbox(Optim.GradientDescent()))
+        rmin = Optim.minimum(res)
+        ir_min = Optim.minimizer(res)[1]
+        z_rmin = itp(ir_min,2)
+
+        t0 = t[argmax(bdry.z)]
+        res = Optim.optimize(x -> -itp(x[1],2), [0.0], [1.0], [t0], Optim.Fminbox(Optim.GradientDescent()))
+        zmax = -Optim.minimum(res)
+        iz_max = Optim.minimizer(res)[1]
+        r_zmax = itp(iz_max,1)
+
+        t0 = t[argmin(bdry.z)]
+        res = Optim.optimize(x -> itp(x[1],2), [0.0], [1.0], [t0], Optim.Fminbox(Optim.GradientDescent()))
+        zmin = Optim.minimum(res)
+        iz_min = Optim.minimizer(res)[1]
+        r_zmin = itp(iz_min,1)
+    else
+        rmin, ir_min = findmin(bdry.r)
+        rmax, ir_max = findmax(bdry.r)
+        zmin, iz_min = findmin(bdry.z)
+        zmax, iz_max = findmax(bdry.z)
+
+        r_zmax = bdry.r[iz_max]
+        r_zmin = bdry.r[iz_min]
+        z_rmax = bdry.z[ir_max]
+        z_rmin = bdry.z[ir_min]
+    end
+
+    outer = (rmax,z_rmax)
+    inner = (rmin,z_rmin)
+    top = (r_zmax, zmax)
+    bottom = (r_zmin, zmin)
+
+    return outer, top, inner, bottom
+end
+
 function flux_surface(M::AbstractEquilibrium, psi::Float64, dx::Float64=0.01, dy::Float64=0.01; n_interp=0, raise_error=true)
     maxis = magnetic_axis(M)
     psimag, psibdry = psi_limits(M)
