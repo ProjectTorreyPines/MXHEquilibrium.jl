@@ -10,6 +10,13 @@ S = MillerShape(R0,Z0,ϵ,κ,δ)
 
 @testset "Shape Tests" begin
 
+    @testset "Promote and Convert Tests" begin
+        SS, v = promote(S, 1.0f0)
+        @test typeof(v) == Float64
+        SS = convert(Float32, S)
+        @test typeof(SS.R0) == Float32
+    end
+
     @testset "Point Tests" begin
         @test (true,true) == (S(0.0)./R0  .≈ (1 + ϵ, 0.0))
         @test (true,true) == (S(pi)./R0   .≈ (1 - ϵ, 0.0))

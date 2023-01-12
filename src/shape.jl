@@ -7,6 +7,14 @@ function Base.copy(S::T) where T <: PlasmaShape
     return SS
 end
 
+function Base.promote_rule(::Type{<:PlasmaShape{T}},::Type{R}) where {T,R}
+    return promote_type(T,R)
+end
+
+function Base.promote_rule(::Type{R},::Type{<:PlasmaShape{T}}) where {T,R}
+    return promote_type(R,T)
+end
+
 function (S::PlasmaShape)(ρ::T,θ::T,ζ::T) where T<:Number
     ρ > minor_radius(S) && throw(DomainError("ρ is larger than the minor radius"))
     r, z = S(ρ,θ)
@@ -196,6 +204,10 @@ struct MillerShape{T} <: PlasmaShape{T}
     δ::T   # Triangularity
 end
 
+function Base.convert(::Type{T},S::R) where {T<:Number, R<:MillerShape}
+    SS = MillerShape((convert(T,getfield(S,s)) for s in fieldnames(R))...)
+end
+
 const MShape = MillerShape
 
 MillerShape() = MillerShape(0.0, 0.0, 0.0, 0.0, 0.0)
@@ -275,6 +287,10 @@ struct AsymmetricMillerShape{T} <: PlasmaShape{T}
     κ::T   # Elongation
     δl::T  # Lower Triangularity
     δu::T  # Lower Triangularity
+end
+
+function Base.convert(::Type{T},S::R) where {T<:Number, R<:AsymmetricMillerShape}
+    SS = AsymmetricMillerShape((convert(T,getfield(S,s)) for s in fieldnames(R))...)
 end
 
 const AMShape = AsymmetricMillerShape
@@ -358,6 +374,10 @@ struct TurnbullMillerShape{T} <: PlasmaShape{T}
     κ::T   # Elongation
     δ::T   # Triangularity
     ζ::T   # Squareness
+end
+
+function Base.convert(::Type{T},S::R) where {T<:Number, R<:TurnbullMillerShape}
+    SS = TurnbullMillerShape((convert(T,getfield(S,s)) for s in fieldnames(R))...)
 end
 
 const TMShape = TurnbullMillerShape
@@ -449,6 +469,10 @@ struct MillerExtendedHarmonicShape{N, T} <: PlasmaShape{T}
     s::SVector{N,T} # Sine coefficients asin.([triangularity,-squareness,...]
 end
 
+function Base.convert(::Type{T},S::R) where {T<:Number, R<:MillerExtendedHarmonicShape}
+    SS = MillerExtendedHarmonicShape((convert(T,getfield(S,s)) for s in fieldnames(R))...)
+end
+
 const MXHShape = MillerExtendedHarmonicShape
 
 function MillerExtendedHarmonicShape(N)
@@ -461,8 +485,8 @@ function MillerExtendedHarmonicShape(N)
 end
 
 function MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, c0, c::Vector, s::Vector)
-    @assert length(c) == length(s) 
-    
+    @assert length(c) == length(s)
+
     R0, Z0, ϵ, κ, c0 = promote(R0,Z0,ϵ,κ,c0, one(eltype(s)), one(eltype(c)))
     N = length(c)
     if N == 0 && c0 == zero(R0)
@@ -584,6 +608,10 @@ struct LuceShape{T} <: PlasmaShape{T}
     κ::NTuple{2,T} # Lower and Upper Elongation
     δ::NTuple{2,T} # Lower and Upper Triangularity
     ζ::NTuple{4,T} # Squareness for the 4 quadrants ζ_(uo,ui,li,lo)
+end
+
+function Base.convert(::Type{T},S::R) where {T<:Number, R<:LuceShape}
+    SS = LuceShape((convert(T,getfield(S,s)) for s in fieldnames(R))...)
 end
 
 const LShape = LuceShape

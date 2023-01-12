@@ -37,6 +37,13 @@ test_data = ((cc1,S1,r1,btip1), (cc2,S2,r2,btip2), (cc3,S3,r3,btip3), (cc4,S4,r4
 
 @testset "Solov'ev Tests" begin
 
+    @testset "Promote & Convert Tests" begin
+        SS,v = promote(S1,1.0f0)
+        @test typeof(v) == Float64
+        SS = convert(Float32,S1)
+        @test typeof(SS.B0) == Float32
+    end
+
     @testset "Beta Tests" begin
         @test round(beta_t(S1),digits=2) == β_t
         @test round(beta_p(S1),digits=2) == round(beta_t(S1)*qstar^2 / ϵ^2,digits=2)

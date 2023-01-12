@@ -292,10 +292,37 @@ struct SolovevEquilibrium{T,N,R} <: AbstractEquilibrium
     beta_t::T
     c::SVector{N,T}
     diverted::Bool
-    x_point::Union{NTuple{2},Nothing}
+    x_point::Union{NTuple{2,T},Nothing}
     symmetric::Bool
     sigma_B0::Int
     sigma_Ip::Int
+end
+
+function Base.promote_rule(::Type{SolovevEquilibrium{T,N,R}},::Type{S}) where {T,N,R,S}
+    type = promote_type(promote_type(T,R),S)
+    return type
+end
+
+function Base.promote_rule(type1::Type{S}, type2::Type{SolovevEquilibrium{T,N,R}}) where {T,N,R,S}
+    return promote_rule(type2,type1)
+end
+
+function Base.convert(::Type{T}, M0::SolovevEquilibrium) where T<:Number
+    B0 = convert(T,M0.B0)
+    S = convert(T,M0.S)
+    alpha = convert(T,M0.alpha)
+    qstar = convert(T,M0.qstar)
+    psi0 = convert(T,M0.psi0)
+    beta_p = convert(T,M0.beta_p)
+    beta_t = convert(T,M0.beta_t)
+    c = convert(SVector{length(M0.c),T},M0.c)
+    if M0.x_point == nothing
+        x_point = nothing
+    else
+        x_point = T.(M0.x_point)
+    end
+    M = SolovevEquilibrium(M0.cocos,B0,S,alpha,qstar,psi0,beta_p,beta_t,c,M0.diverted,x_point,M0.symmetric,M0.sigma_B0,M0.sigma_Ip)
+    return M
 end
 
 """
