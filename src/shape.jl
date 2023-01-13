@@ -1,6 +1,7 @@
 abstract type PlasmaShape{T} end
 
 Base.broadcastable(S::PlasmaShape) = (S,)
+Base.eltype(::PlasmaShape{T}) where T = T
 
 function Base.copy(S::T) where T <: PlasmaShape
     SS = T((getfield(S,s) for s in fieldnames(T))...)
@@ -719,6 +720,10 @@ for S in (MShape,AMShape,TMShape,MXHShape,LShape)
             return $S{promote_type(T,R)}
         end
     end
+end
+
+function convert_eltype(x::S, ::Type{R}) where {S<:PlasmaShape, R}
+    convert(S.name.wrapper{R},x)
 end
 
 # --- special cases ----

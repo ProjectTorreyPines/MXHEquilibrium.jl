@@ -317,10 +317,7 @@ end
 
 function Base.convert(::Type{SolovevEquilibrium{T,N,R}}, M0::SolovevEquilibrium) where {T,N,R}
     B0 = convert(T,M0.B0)
-    shape_name = typeof(M0.S).name.name
-    S = @eval begin
-        convert($(shape_name){$R}, $(M0.S))
-    end
+    S = convert(typeof(M0.S).name.wrapper{R}, M0.S)
     alpha = convert(T,M0.alpha)
     qstar = convert(T,M0.qstar)
     psi0 = convert(T,M0.psi0)

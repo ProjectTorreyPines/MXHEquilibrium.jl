@@ -82,6 +82,7 @@ export PlasmaShape, MillerShape, TurnbullMillerShape, MillerExtendedHarmonicShap
 export AsymmetricMillerShape, AMShape, MShape, TMShape, MXHShape, LShape, shape
 export curvature, triangularity, squareness, tilt, elevation, ovality
 export scale_aspect, elongation, aspect_ratio, major_radius, minor_radius
+export convert_eltype
 
 # Shape Fallbacks
 (S::PlasmaShape)(x) = _not_implemented(S)

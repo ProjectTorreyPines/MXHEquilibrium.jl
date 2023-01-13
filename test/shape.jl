@@ -11,6 +11,8 @@ S = MillerShape(R0,Z0,ϵ,κ,δ)
 @testset "Shape Tests" begin
 
     @testset "Promote and Convert Tests" begin
+        @test eltype(S) == Float64
+        @test typeof(convert_eltype(S,Float32)) == MillerShape{Float32}
         S32 = MillerShape{Float32}(S)
         @test typeof(S32) == MillerShape{Float32}
         SS, SS32, v = promote(S, S32, 1.0f0)
