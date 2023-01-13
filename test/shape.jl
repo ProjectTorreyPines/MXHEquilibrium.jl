@@ -11,10 +11,13 @@ S = MillerShape(R0,Z0,ϵ,κ,δ)
 @testset "Shape Tests" begin
 
     @testset "Promote and Convert Tests" begin
-        SS, v = promote(S, 1.0f0)
+        S32 = MillerShape{Float32}(S)
+        @test typeof(S32) == MillerShape{Float32}
+        SS, SS32, v = promote(S, S32, 1.0f0)
+        @test typeof(SS) == typeof(S)
+        @test typeof(SS32) == typeof(S)
         @test typeof(v) == Float64
-        SS = convert(Float32, S)
-        @test typeof(SS.R0) == Float32
+        @test convert(MShape{Float64}, 1.f0) == 1e0
     end
 
     @testset "Point Tests" begin

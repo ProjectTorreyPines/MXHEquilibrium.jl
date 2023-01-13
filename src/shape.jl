@@ -7,14 +7,6 @@ function Base.copy(S::T) where T <: PlasmaShape
     return SS
 end
 
-function Base.promote_rule(::Type{<:PlasmaShape{T}},::Type{R}) where {T,R}
-    return promote_type(T,R)
-end
-
-function Base.promote_rule(::Type{R},::Type{<:PlasmaShape{T}}) where {T,R}
-    return promote_type(R,T)
-end
-
 function (S::PlasmaShape)(ρ::T,θ::T,ζ::T) where T<:Number
     ρ > minor_radius(S) && throw(DomainError("ρ is larger than the minor radius"))
     r, z = S(ρ,θ)
@@ -204,10 +196,6 @@ struct MillerShape{T} <: PlasmaShape{T}
     δ::T   # Triangularity
 end
 
-function Base.convert(::Type{T},S::R) where {T<:Number, R<:MillerShape}
-    SS = MillerShape((convert(T,getfield(S,s)) for s in fieldnames(R))...)
-end
-
 const MShape = MillerShape
 
 MillerShape() = MillerShape(0.0, 0.0, 0.0, 0.0, 0.0)
@@ -287,10 +275,6 @@ struct AsymmetricMillerShape{T} <: PlasmaShape{T}
     κ::T   # Elongation
     δl::T  # Lower Triangularity
     δu::T  # Lower Triangularity
-end
-
-function Base.convert(::Type{T},S::R) where {T<:Number, R<:AsymmetricMillerShape}
-    SS = AsymmetricMillerShape((convert(T,getfield(S,s)) for s in fieldnames(R))...)
 end
 
 const AMShape = AsymmetricMillerShape
@@ -374,10 +358,6 @@ struct TurnbullMillerShape{T} <: PlasmaShape{T}
     κ::T   # Elongation
     δ::T   # Triangularity
     ζ::T   # Squareness
-end
-
-function Base.convert(::Type{T},S::R) where {T<:Number, R<:TurnbullMillerShape}
-    SS = TurnbullMillerShape((convert(T,getfield(S,s)) for s in fieldnames(R))...)
 end
 
 const TMShape = TurnbullMillerShape
@@ -467,10 +447,6 @@ struct MillerExtendedHarmonicShape{N, T} <: PlasmaShape{T}
     c0::T           # Tilt
     c::SVector{N,T} # Cosine coefficients acos.([ovality,...])
     s::SVector{N,T} # Sine coefficients asin.([triangularity,-squareness,...]
-end
-
-function Base.convert(::Type{T},S::R) where {T<:Number, R<:MillerExtendedHarmonicShape}
-    SS = MillerExtendedHarmonicShape((convert(T,getfield(S,s)) for s in fieldnames(R))...)
 end
 
 const MXHShape = MillerExtendedHarmonicShape
@@ -610,10 +586,6 @@ struct LuceShape{T} <: PlasmaShape{T}
     ζ::NTuple{4,T} # Squareness for the 4 quadrants ζ_(uo,ui,li,lo)
 end
 
-function Base.convert(::Type{T},S::R) where {T<:Number, R<:LuceShape}
-    SS = LuceShape((convert(T,getfield(S,s)) for s in fieldnames(R))...)
-end
-
 const LShape = LuceShape
 
 LuceShape() = LuceShape(0.0, 0.0, 0.0, 0.0, (0.0,0.0), (0.0,0.0), (0.0,0.0,0.0,0.0))
@@ -719,6 +691,34 @@ end
 
 function (S::LuceShape)(r::T,θ::T) where T<:Number
     return luce_rz(r, θ, S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ)
+end
+
+# --- Conversion and Promotions ---
+(::Type{T})(S::PlasmaShape) where T<:PlasmaShape = convert(T,S)
+Base.convert(::Type{<:PlasmaShape{T}}, x) where T = T(x)
+
+for S in (MShape,AMShape,TMShape,MXHShape,LShape)
+    @eval begin
+        function Base.convert(SS::Type{PlasmaShape{T}},W::$S{R}) where {T,R}
+            return convert($S{T},W)
+        end
+
+        function Base.convert(::Type{$S{T}},W::$S) where T
+            return $S{T}((getfield(W,s) for s in fieldnames($S))...)
+        end
+
+        function Base.promote_rule(::Type{$S{T}},::Type{$S{R}}) where {T,R}
+            return $S{promote_type(T,R)}
+        end
+
+        function Base.promote_rule(::Type{$S{T}},::Type{R}) where {T,R}
+            return $S{promote_type(T,R)}
+        end
+
+        function Base.promote_rule(::Type{R},::Type{$S{T}}) where {T,R}
+            return $S{promote_type(T,R)}
+        end
+    end
 end
 
 # --- special cases ----

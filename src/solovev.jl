@@ -298,24 +298,35 @@ struct SolovevEquilibrium{T,N,R} <: AbstractEquilibrium
     sigma_Ip::Int
 end
 
+Base.convert(::Type{SolovevEquilibrium{T,N,R}}, x) where {T,N,R} = convert(promote_type(T,R), x)
+
 function Base.promote_rule(::Type{SolovevEquilibrium{T,N,R}},::Type{S}) where {T,N,R,S}
-    type = promote_type(promote_type(T,R),S)
-    return type
+    type = promote_type(T,R,S)
+    return SolovevEquilibrium{type,N,type}
 end
 
-function Base.promote_rule(type1::Type{S}, type2::Type{SolovevEquilibrium{T,N,R}}) where {T,N,R,S}
-    return promote_rule(type2,type1)
+function Base.promote_rule(::Type{S}, ::Type{SolovevEquilibrium{T,N,R}}) where {T,N,R,S}
+    type = promote_type(S,T,R)
+    return SolovevEquilibrium{type,N,type}
 end
 
-function Base.convert(::Type{T}, M0::SolovevEquilibrium) where T<:Number
+function Base.promote_rule(::Type{SolovevEquilibrium{T1,N,R1}},::Type{SolovevEquilibrium{T2,N,R2}}) where {N,T1,R1,T2,R2}
+    type = promote_type(T1,R1,T2,R2)
+    return SolovevEquilibrium{type,N,type}
+end
+
+function Base.convert(::Type{SolovevEquilibrium{T,N,R}}, M0::SolovevEquilibrium) where {T,N,R}
     B0 = convert(T,M0.B0)
-    S = convert(T,M0.S)
+    shape_name = typeof(M0.S).name.name
+    S = @eval begin
+        convert($(shape_name){$R}, $(M0.S))
+    end
     alpha = convert(T,M0.alpha)
     qstar = convert(T,M0.qstar)
     psi0 = convert(T,M0.psi0)
     beta_p = convert(T,M0.beta_p)
     beta_t = convert(T,M0.beta_t)
-    c = convert(SVector{length(M0.c),T},M0.c)
+    c = convert(SVector{length(M0.c),R},M0.c)
     if M0.x_point == nothing
         x_point = nothing
     else

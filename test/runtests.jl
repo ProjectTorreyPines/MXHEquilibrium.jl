@@ -8,7 +8,7 @@ using EFIT
 
 mu0 = 4pi*10^-7
 
-@testset "Equilibrium" begin
+@testset "MXHEquilibrium" begin
 
 include("shape.jl")
 

@@ -38,10 +38,13 @@ test_data = ((cc1,S1,r1,btip1), (cc2,S2,r2,btip2), (cc3,S3,r3,btip3), (cc4,S4,r4
 @testset "Solov'ev Tests" begin
 
     @testset "Promote & Convert Tests" begin
-        SS,v = promote(S1,1.0f0)
+        S1F32 = convert(SolovevEquilibrium{Float32,7,Float32},S1)
+        @test typeof(S1F32) == SolovevEquilibrium{Float32,7,Float32}
+        SS, SS1, v = promote(S1, S1F32, 1.0f0)
+        @test typeof(SS) == typeof(S1)
+        @test typeof(SS1) == typeof(S1)
         @test typeof(v) == Float64
-        SS = convert(Float32,S1)
-        @test typeof(SS.B0) == Float32
+        @test convert(typeof(S1),1) == one(Float64)
     end
 
     @testset "Beta Tests" begin
