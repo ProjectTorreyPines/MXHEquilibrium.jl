@@ -705,9 +705,9 @@ end
 (::Type{T})(S::PlasmaShape) where T<:PlasmaShape = convert(T,S)
 Base.convert(::Type{<:PlasmaShape{T}}, x) where T = T(x)
 
-for S in (MShape,AMShape,TMShape,MXHShape,LShape)
+for S in (MShape,AMShape,TMShape,LShape)
     @eval begin
-        function Base.convert(SS::Type{PlasmaShape{T}},W::$S{R}) where {T,R}
+        function Base.convert(SS::Type{<:PlasmaShape{T}},W::$S{R}) where {T,R}
             return convert($S{T},W)
         end
 
@@ -730,6 +730,10 @@ for S in (MShape,AMShape,TMShape,MXHShape,LShape)
 end
 
 # --- Promotion/Conversion for MXHShape ---
+function Base.convert(SS::Type{<:PlasmaShape{T}},W::MXHShape{N,R}) where {N,T,R}
+    return convert(MXHShape{N,T},W)
+end
+
 function Base.convert(::Type{MXHShape{N,T}},W::MXHShape) where {N,T}
     return MXHShape{N,T}((getfield(W,s) for s in fieldnames(MXHShape))...)
 end
