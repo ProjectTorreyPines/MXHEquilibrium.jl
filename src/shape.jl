@@ -147,7 +147,7 @@ end
     end
 end
 
-function limits(s::PlasmaShape, x_point=nothing; pad=0.2)
+function limits(s::T, x_point=nothing; pad=0.2) where T <: PlasmaShape
     xlims = ((1-pad)*s(pi)[1], (1+pad)*s(0.0)[1])
     ylims = ((1+pad)*s(3pi/2)[2], (1+pad)*s(pi/2)[2])
     if x_point !== nothing
