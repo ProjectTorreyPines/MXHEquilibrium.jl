@@ -147,9 +147,9 @@ end
     end
 end
 
-function limits(s::PlasmaShape, x_point=nothing)
-    xlims = (0.8*s(pi)[1], 1.2*s(0.0)[1])
-    ylims = (1.2*s(3pi/2)[2], 1.2*s(pi/2)[2])
+function limits(s::PlasmaShape, x_point=nothing; pad=0.2)
+    xlims = ((1-pad)*s(pi)[1], (1+pad)*s(0.0)[1])
+    ylims = ((1+pad)*s(3pi/2)[2], (1+pad)*s(pi/2)[2])
     if x_point !== nothing
         xlims = (min(xlims[1],x_point[1]), max(xlims[2],x_point[1]))
         ylims = (min(ylims[1],x_point[2]), max(ylims[2],x_point[2]))
