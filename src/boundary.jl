@@ -154,7 +154,7 @@ function flux_surface(x::AbstractRange, y::AbstractRange, Psi::Matrix, psi::Floa
     return nothing
 end
 
-plasma_boundary(M::AbstractEquilibrium) = flux_surface(M, plasma_boundary_psi(M))
+plasma_boundary(M::AbstractEquilibrium) = flux_surface(M, boundary_psi(M))
 
 function limits(b::Boundary; pad=0.2)
     xlims, ylims = extrema(b.r), extrema(b.z)

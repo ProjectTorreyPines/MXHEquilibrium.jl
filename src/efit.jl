@@ -13,7 +13,6 @@ mutable struct EFITEquilibrium{T<:Real,S<:AbstractRange, R<:AbstractMatrix, Q<:A
 end
 
 function efit(cc::COCOS, r::S, z::S, psi::S, psi_rz, g, p, q, phi, axis::NTuple{2,T}, sigma::Int) where {T,S<:AbstractRange}
-
     psi_rz_itp = cubic_spline_interpolation((r, z), psi_rz, extrapolation_bc=Flat())
     if step(psi) > 0
         g_itp = cubic_spline_interpolation(psi, g, extrapolation_bc=Flat())
@@ -127,4 +126,9 @@ end
 @memoize LRU(maxsize=cache_size) function plasma_boundary(N::EFITEquilibrium; kwargs...)
     psi, bdry = plasma_boundary_psi(N; kwargs...)
     return bdry
+end
+
+@memoize LRU(maxsize=cache_size) function psi_boundary(N::EFITEquilibrium; kwargs...)
+    psi, bdry = plasma_boundary_psi(N; kwargs...)
+    return psi
 end

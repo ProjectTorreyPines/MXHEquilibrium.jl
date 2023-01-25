@@ -58,10 +58,11 @@ pressure_gradient(M::AbstractEquilibrium, psi) = _not_implemented(M)
 poloidal_current_gradient(M::AbstractEquilibrium, psi) = _not_implemented(M)
 cocos(M::AbstractEquilibrium) = _not_implemented(M)
 B0Ip_sign(M::AbstractEquilibrium) = _not_implemented(M)
-plasma_boundary_psi(M::AbstractEquilibrium) = psi_limits(M)[2]
+psi_boundary(M::AbstractEquilibrium) = _not_implemented(M)
+plasma_boundary_psi(M::AbstractEquilibrium) = (plasma_boundary(M), psi_boundary(M))
 
 # Equilibrium API
-export magnetic_axis, limits, psi_limits, plasma_boundary_psi, psi_gradient, electric_potential, electric_potential_gradient
+export magnetic_axis, limits, psi_limits, psi_boundary, plasma_boundary_psi, psi_gradient, electric_potential, electric_potential_gradient
 export pressure, poloidal_current, pressure_gradient, poloidal_current_gradient, safety_factor, B0Ip_sign
 export plasma_current, beta, beta_n, beta_p, beta_t, psi_range, rho_p, toroidal_flux
 
