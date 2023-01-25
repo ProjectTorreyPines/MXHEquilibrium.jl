@@ -601,8 +601,8 @@ function B0Ip_sign(S::SolovevEquilibrium)
     return S.sigma_B0*S.sigma_Ip
 end
 
-function limits(S::SolovevEquilibrium)
-    xlims, ylims = limits(shape(S),S.x_point)
+function limits(S::SolovevEquilibrium; pad=0.2)
+    xlims, ylims = limits(shape(S), S.x_point; pad=pad)
 end
 
 function psi_gradient(S::SolovevEquilibrium,r,z)

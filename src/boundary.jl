@@ -156,7 +156,14 @@ end
 
 plasma_boundary(M::AbstractEquilibrium) = flux_surface(M, plasma_boundary_psi(M))
 
-limits(b::Boundary) = extrema(b.r), extrema(b.z)
+function limits(b::Boundary; pad=0.2)
+    xlims, ylims = extrema(b.r), extrema(b.z)
+    xpad = xlims[2] - xlims[1]
+    ypad = ylims[2] - ylims[1]
+    xlims = (max(xlims[1] - xpad * pad, 0.0), xlims[2] + xpad * pad)
+    ylims = (ylims[1] - ypad * pad, ylims[2] + ypad * pad)
+    return xlims, ylims
+end
 
 @memoize LRU(maxsize = 5) function circumference(b::Boundary)
     p = b.points
