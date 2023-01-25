@@ -603,6 +603,11 @@ function LuceShape(G::PlasmaGeometricParameters)
     LuceShape(getfield.(G,fieldnames(typeof(G)))...)
 end
 
+function LuceShape(r::Vector,z::Vector)
+    G = plasma_geometry(r,z)
+    return LuceShape(G)
+end
+
 function Base.show(io::IO, G::LuceShape)
     print(io, "$(typeof(G))\n")
     print(io, "  R0 = $(round(G.R0,digits=3)) [m]\n")

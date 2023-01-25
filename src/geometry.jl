@@ -169,3 +169,12 @@ end
 function flux_surface_geometry(bdry::Boundary)
     return plasma_geometry(bdry)
 end
+
+function plasma_geometry(r::Vector,z::Vector)
+    bdry = Boundary(r,z)
+    return plasma_geometry(bdry)
+end
+
+function flux_surface_geometry(r::Vector,z::Vector)
+    return plasma_geometry(r,z)
+end
