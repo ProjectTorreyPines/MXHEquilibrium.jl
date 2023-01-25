@@ -731,6 +731,23 @@ for S in (MShape,AMShape,TMShape,MXHShape,LShape)
     end
 end
 
+# --- Promotion/Conversion for MXHShape ---
+function Base.convert(::Type{MXHShape{N,T}},W::MXHShape) where {N,T}
+    return MXHShape{N,T}((getfield(W,s) for s in fieldnames(MXHShape))...)
+end
+
+function Base.promote_rule(::Type{MXHShape{N,T}},::Type{MXHShape{N,R}}) where {N,T,R}
+    return MXHShape{N,promote_type(T,R)}
+end
+
+function Base.promote_rule(::Type{MXHShape{N,T}},::Type{R}) where {N,T,R}
+    return MXHShape{N,promote_type(T,R)}
+end
+
+function Base.promote_rule(::Type{R},::Type{MXHShape{N,T}}) where {N,T,R}
+    return MXHShape{N,promote_type(T,R)}
+end
+
 function convert_eltype(x::S, ::Type{R}) where {S<:PlasmaShape, R}
     convert(S.name.wrapper{R},x)
 end
