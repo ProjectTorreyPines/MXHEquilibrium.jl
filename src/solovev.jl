@@ -627,7 +627,7 @@ function psi_limits(S::SolovevEquilibrium)
 end
 
 function psi_boundary(S::SolovevEquilibrium)
-    return psi_limits[2]
+    return psi_limits(S)[2]
 end
 
 function pressure_gradient(S::SolovevEquilibrium)
