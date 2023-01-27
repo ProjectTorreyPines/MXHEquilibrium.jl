@@ -626,6 +626,10 @@ function psi_limits(S::SolovevEquilibrium)
     return (psimag, psibry)
 end
 
+function psi_boundary(S::SolovevEquilibrium)
+    return psi_limits[2]
+end
+
 function pressure_gradient(S::SolovevEquilibrium)
     C = S.psi0*(1-S.alpha)/(S.S.R0^4)
     return -C/mu0
