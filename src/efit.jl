@@ -127,3 +127,8 @@ end
     psi, bdry = plasma_boundary_psi(N; kwargs...)
     return bdry
 end
+
+@memoize LRU(maxsize=cache_size) function psi_boundary(N::EFITEquilibrium; kwargs...)
+    psi, bdry = plasma_boundary_psi(N; kwargs...)
+    return psi
+end
