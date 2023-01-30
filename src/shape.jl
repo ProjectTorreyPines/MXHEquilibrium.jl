@@ -480,15 +480,14 @@ function MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, c0, c::Vector, s::Vector)
 end
 
 function MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, δ; tilt=zero(κ), c0=tilt, ovality=one(R0), squareness=zero(R0))
-
     R0, Z0, ϵ, κ, c0, ovality, squareness = promote(R0,Z0,ϵ,κ,c0,ovality,squareness)
     Z = zero(R0)
     if δ == Z && c0 == Z && ovality == Z && squareness == Z
         return MillerShape(R0,Z0,ϵ,κ,δ)
     end
-
     c = SVector(ovality, zero(ovality))
     s = SVector(asin(δ), -squareness)
+
     MillerExtendedHarmonicShape(R0,Z0,ϵ,κ,c0,c,s)
 end
 
@@ -509,7 +508,7 @@ tilt(S::MXHShape) = S.c0
 ovality(S::MXHShape) = S.c[1]
 triangularity(S::MXHShape) = sin(S.s[1])
 # MXH squareness differs from TurnbullMiller, using MXH paper's definition
-squareness(S::MXHShape) = S.s[2]
+squareness(S::MXHShape) = -S.s[2]
 
 function Base.show(io::IO, S::MXHShape)
     print(io, "$(typeof(S))\n")
@@ -523,7 +522,6 @@ function Base.show(io::IO, S::MXHShape)
 end
 
 function mxh_rz(r, θ, R0, Z0, κ, c0, c::SVector{N}, s::SVector{N}) where N
-
     c_sum = 0.0
     @inbounds for n=1:N
         c_sum += c[n]*cos(n*θ)
