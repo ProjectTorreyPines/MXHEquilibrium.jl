@@ -440,7 +440,7 @@ Keyword Arguments:\\
 
             c = SVector{7}(Ψ_h[1:7,1:7]'\(-Ψ_p[1:7]))
         else
-            xsep, ysep = x_point[1]/R0, (x_point[2] - 2 * Z0)/R0 # normalize x_point
+            xsep, ysep = x_point[1]/R0, (x_point[2] - Z0)/R0 # normalize x_point
 
             # Eq. 12
             # Outer equatorial point
@@ -475,7 +475,7 @@ Keyword Arguments:\\
             c = SVector{7}(Ψ_h[1:7,1:7]'\(-Ψ_p[1:7]))
         end
     else
-        xsep, ysep = x_point[1]/R0, (x_point[2] - 2 * Z0)/R0 # normalize x_point
+        xsep, ysep = x_point[1]/R0, (x_point[2] - Z0)/R0 # normalize x_point
         if ysep > 0
             throw(ArgumentError("X-point should be below the midplane"))
         end
@@ -534,10 +534,10 @@ Keyword Arguments:\\
     end
 
     if !symmetric
-        x,y = shape(S, N=100, normed=true)
+        x,y = shape(S,N=100, normed=true)
         bdry = PlasmaBoundary(collect(zip(x,y)))
     else
-        rlims, zlims = limits(S, x_point)
+        rlims, zlims = limits(S,x_point)
         xmin,xmax = rlims ./ R0
         ymin,ymax = (zlims .- Z0) ./ R0
         x = xmin:0.01:xmax
