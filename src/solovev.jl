@@ -534,10 +534,10 @@ Keyword Arguments:\\
     end
 
     if !symmetric
-        x,y = shape(S,N=100, normed=true)
+        x,y = shape(S, N=100, normed=true)
         bdry = PlasmaBoundary(collect(zip(x,y)))
     else
-        rlims, zlims = limits(S,x_point)
+        rlims, zlims = limits(S, x_point)
         xmin,xmax = rlims ./ R0
         ymin,ymax = (zlims .- Z0) ./ R0
         x = xmin:0.01:xmax
