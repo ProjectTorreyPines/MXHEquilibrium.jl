@@ -101,14 +101,14 @@ function boundary_extrema(bdry::Boundary; interp=true)
     return outer, top, inner, bottom
 end
 
-function flux_surface(M::AbstractEquilibrium, psi::Float64, dx::Float64=0.01, dy::Float64=0.01; n_interp=0, raise_error=true)
+function flux_surface(M::AbstractEquilibrium, psi::Float64, dx::Float64=0.01, dy::Float64=0.01; n_interp=0, raise_error=true, kwargs...)
     maxis = magnetic_axis(M)
     psimag, psibdry = psi_limits(M)
     if abs(psi) >= abs(psimag)
         return Boundary([maxis[1]],[maxis[2]])
     end
 
-    xlims, ylims = limits(M)
+    xlims, ylims = limits(M; kwargs...)
     x = range(xlims...,step=dx)
     y = range(ylims...,step=dy)
     Psi = [M(xx,yy) for xx in x, yy in y]
@@ -154,7 +154,7 @@ function flux_surface(x::AbstractRange, y::AbstractRange, Psi::Matrix, psi::Floa
     return nothing
 end
 
-plasma_boundary(M::AbstractEquilibrium) = flux_surface(M, boundary_psi(M))
+plasma_boundary(M::AbstractEquilibrium; kwargs...) = flux_surface(M, psi_boundary(M); kwargs...)
 
 function limits(b::Boundary; pad=0.2)
     xlims, ylims = extrema(b.r), extrema(b.z)

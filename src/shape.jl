@@ -166,10 +166,8 @@ function plasma_boundary(S::PlasmaShape; kwargs...)
     return PlasmaBoundary(collect(zip(x[1:end-1],y[1:end-1])))
 end
 
-function scale_aspect(S::PlasmaShape,s)
-    SS = copy(S)
-    SS.ϵ = s*S.ϵ
-    return SS
+function scale_aspect(S::T,s) where T<:PlasmaShape
+    return T((f == :ϵ ? s*getfield(S,f) : getfield(S,f) for f in fieldnames(T))...)
 end
 
 function Base.getproperty(S::PlasmaShape,s::Symbol)
