@@ -1,4 +1,4 @@
-mutable struct EFITEquilibrium{T<:Real,S<:AbstractRange, R<:AbstractMatrix, Q<:AbstractVector} <: AbstractEquilibrium
+mutable struct EFITEquilibrium{T<:Real,S<:AbstractRange,R<:AbstractMatrix,Q<:AbstractVector} <: AbstractEquilibrium
     cocos::COCOS       # COCOS
     r::S               # Radius/R range
     z::S               # Elevation/Z range
@@ -88,20 +88,16 @@ function electric_potential_gradient(N::EFITEquilibrium, psi)
     return Interpolations.gradient(N.phi, psi)[1]
 end
 
-function plasma_boundary_psi(N::EFITEquilibrium; precision::Float64=1E-3, r::Union{Nothing,AbstractRange}=nothing, z::Union{Nothing,AbstractRange}=nothing)
+function plasma_boundary_psi(N::EFITEquilibrium; precision::Float64=1E-3, r::AbstractRange=N.r, z::AbstractRange=N.z)
     original_psirange = psi_limits(N)
     psirange = collect(original_psirange)
     psirange[1] = psirange[1] - (psirange[end] - psirange[1]) * 0.5
     psirange[end] = psirange[end] + (psirange[end] - psirange[1]) * 0.5
 
-    rlims, zlims = limits(N)
-    dd = sqrt((rlims[2] - rlims[1])^2 + (zlims[2] - zlims[1])^2) / 100
-    if r === nothing
-        r = range(rlims..., step=dd)
-    end
-    if z === nothing
-        z = range(zlims..., step=dd)
-    end
+    rlims = (minimum(r), maximum(r))
+    zlims = (minimum(z), maximum(z))
+    dd = sqrt((r[2] - r[1])^2 + (z[2] - z[1])^2)
+
     Psi = [N(rr, zz) for rr in r, zz in z]
 
     for k in 1:100
@@ -109,9 +105,9 @@ function plasma_boundary_psi(N::EFITEquilibrium; precision::Float64=1E-3, r::Uni
         bnd = flux_surface(r, z, Psi, psimid)
         if bnd !== nothing
             psirange[1] = psimid
-            if (abs(psirange[end] - psirange[1]) < precision) || (precision == 0.0)
+            if (precision == 0.0) || (abs(psirange[end] - psirange[1]) < precision)
                 xlims, ylims = limits(bnd)
-                if precision == 0.0 || any(abs.(vcat(collect(xlims .- rlims), collect(ylims .- zlims))) .< 2 * dd)
+                if (precision == 0.0) || any(abs.(vcat(collect(xlims .- rlims), collect(ylims .- zlims))) .< 2 * dd)
                     original_bnd = flux_surface(r, z, Psi, original_psirange[end])
                     return original_psirange[end], original_bnd
                 else
@@ -122,6 +118,8 @@ function plasma_boundary_psi(N::EFITEquilibrium; precision::Float64=1E-3, r::Uni
             psirange[end] = psimid
         end
     end
+    
+    error("Closed plasma boundary could not be found")
 end
 
 @memoize LRU(maxsize=cache_size) function plasma_boundary(N::EFITEquilibrium; kwargs...)
