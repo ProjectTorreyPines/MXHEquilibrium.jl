@@ -105,9 +105,9 @@ function plasma_boundary_psi(N::EFITEquilibrium; precision::Float64=1E-3, r::Abs
         bnd = flux_surface(r, z, Psi, psimid)
         if bnd !== nothing
             psirange[1] = psimid
-            if (abs(psirange[end] - psirange[1]) < precision) || (precision == 0.0)
+            if (precision == 0.0) || (abs(psirange[end] - psirange[1]) < precision)
                 xlims, ylims = limits(bnd)
-                if precision == 0.0 || any(abs.(vcat(collect(xlims .- rlims), collect(ylims .- zlims))) .< 2 * dd)
+                if (precision == 0.0) || any(abs.(vcat(collect(xlims .- rlims), collect(ylims .- zlims))) .< 2 * dd)
                     original_bnd = flux_surface(r, z, Psi, original_psirange[end])
                     return original_psirange[end], original_bnd
                 else
@@ -118,6 +118,8 @@ function plasma_boundary_psi(N::EFITEquilibrium; precision::Float64=1E-3, r::Abs
             psirange[end] = psimid
         end
     end
+    
+    error("Closed plasma boundary could not be found")
 end
 
 @memoize LRU(maxsize=cache_size) function plasma_boundary(N::EFITEquilibrium; kwargs...)
