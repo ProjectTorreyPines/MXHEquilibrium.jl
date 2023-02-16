@@ -54,30 +54,39 @@ Returns the outermost, top, innermost, and bottom points on the boundary. Defaul
 function boundary_extrema(bdry::Boundary; interp=true)
 
     if interp
-        t = range(0,1,length=length(bdry.points))
+        N = length(bdry.points)
+        t = range(0,1,length=N)
         rz = hcat(bdry.r,bdry.z)
         itp = extrapolate(scale(Interpolations.interpolate(rz, (BSpline(Cubic(Periodic(OnGrid()))), NoInterp())), t, 1:2), NaN)
 
-        t0 = clamp(t[argmax(bdry.r)],nextfloat(0.0),prevfloat(1.0))
-        res = Optim.optimize(x -> -itp(x[1],1), [0.0], [1.0], [t0], Optim.Fminbox(Optim.GradientDescent()))
+        tind = argmax(bdry.r)
+        tl = t[clamp(tind-1,1,N)]
+        tu = t[clamp(tind+1,1,N)]
+        res = Optim.optimize(x -> -itp(x,1), tl, tu)
         rmax = -Optim.minimum(res)
         ir_max = Optim.minimizer(res)[1]
         z_rmax = itp(ir_max,2)
 
-        t0 = clamp(t[argmin(bdry.r)],nextfloat(0.0),prevfloat(1.0))
-        res = Optim.optimize(x -> itp(x[1],1), [0.0], [1.0], [t0], Optim.Fminbox(Optim.GradientDescent()))
+        tind = argmin(bdry.r)
+        tl = t[clamp(tind-1,1,N)]
+        tu = t[clamp(tind+1,1,N)]
+        res = Optim.optimize(x -> itp(x,1), tl, tu)
         rmin = Optim.minimum(res)
         ir_min = Optim.minimizer(res)[1]
         z_rmin = itp(ir_min,2)
 
-        t0 = clamp(t[argmax(bdry.z)],nextfloat(0.0),prevfloat(1.0))
-        res = Optim.optimize(x -> -itp(x[1],2), [0.0], [1.0], [t0], Optim.Fminbox(Optim.GradientDescent()))
+        tind = argmax(bdry.z)
+        tl = t[clamp(tind-1,1,N)]
+        tu = t[clamp(tind+1,1,N)]
+        res = Optim.optimize(x -> -itp(x,2), tl, tu)
         zmax = -Optim.minimum(res)
         iz_max = Optim.minimizer(res)[1]
         r_zmax = itp(iz_max,1)
 
-        t0 = clamp(t[argmin(bdry.z)],nextfloat(0.0),prevfloat(1.0))
-        res = Optim.optimize(x -> itp(x[1],2), [0.0], [1.0], [t0], Optim.Fminbox(Optim.GradientDescent()))
+        tind = argmin(bdry.z)
+        tl = t[clamp(tind-1,1,N)]
+        tu = t[clamp(tind+1,1,N)]
+        res = Optim.optimize(x -> itp(x,2), tl, tu)
         zmin = Optim.minimum(res)
         iz_min = Optim.minimizer(res)[1]
         r_zmin = itp(iz_min,1)
