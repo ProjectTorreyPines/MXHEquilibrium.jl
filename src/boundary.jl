@@ -145,7 +145,7 @@ function flux_surface(x::AbstractRange, y::AbstractRange, Psi::Matrix, psi::Floa
     # pick a flux surface that closes and isn't far away from Z=0
     for cc in Contour.lines(cl)
         xc, yc = Contour.coordinates(cc)
-        if !((xc[1] == xc[end]) & (yc[1] == yc[end]))
+        if !((xc[1] == xc[end]) && (yc[1] == yc[end]))
             continue
         end
         if length(maxis) > 0
