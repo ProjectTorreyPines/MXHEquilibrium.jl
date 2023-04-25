@@ -7,25 +7,25 @@ mutable struct EFITEquilibrium{T<:Real,S<:AbstractRange,R<:AbstractMatrix,Q<:Abs
     g::Q               # Polodial Current
     p::Q               # Plasma pressure
     q::Q               # Q profile
-    phi::Q             # Electric Potential
+    V::Q               # Electric Potential
     axis::NTuple{2,T}  # Magnetic Axis (raxis,zaxis)
     sigma::Int         # sign(dot(J,B))
 end
 
-function efit(cc::COCOS, r::S, z::S, psi::S, psi_rz, g, p, q, phi, axis::NTuple{2,T}, sigma::Int) where {T,S<:AbstractRange}
+function efit(cc::COCOS, r::S, z::S, psi::S, psi_rz, g, p, q, V, axis::NTuple{2,T}, sigma::Int) where {T,S<:AbstractRange}
     psi_rz_itp = cubic_spline_interpolation((r, z), psi_rz, extrapolation_bc=Flat())
     if step(psi) > 0
         g_itp = cubic_spline_interpolation(psi, g, extrapolation_bc=Flat())
         p_itp = cubic_spline_interpolation(psi, p, extrapolation_bc=Flat())
         q_itp = cubic_spline_interpolation(psi, q, extrapolation_bc=Flat())
-        phi_itp = cubic_spline_interpolation(psi, phi, extrapolation_bc=Flat())
+        V_itp = cubic_spline_interpolation(psi, V, extrapolation_bc=Flat())
     else # cubic_spline_interpolation doesn't like decreasing psi so reverse them
         g_itp = cubic_spline_interpolation(reverse(psi), reverse(g), extrapolation_bc=Flat())
         p_itp = cubic_spline_interpolation(reverse(psi), reverse(p), extrapolation_bc=Flat())
         q_itp = cubic_spline_interpolation(reverse(psi), reverse(q), extrapolation_bc=Flat())
-        phi_itp = cubic_spline_interpolation(reverse(psi), reverse(phi), extrapolation_bc=Flat())
+        V_itp = cubic_spline_interpolation(reverse(psi), reverse(V), extrapolation_bc=Flat())
     end
-    EFITEquilibrium(cc, r, z, psi, psi_rz_itp, g_itp, p_itp, q_itp, phi_itp, axis, Int(sigma))
+    EFITEquilibrium(cc, r, z, psi, psi_rz_itp, g_itp, p_itp, q_itp, V_itp, axis, Int(sigma))
 end
 
 function Base.show(io::IO, N::EFITEquilibrium)
@@ -81,11 +81,11 @@ function safety_factor(N::EFITEquilibrium, psi)
 end
 
 function electric_potential(N::EFITEquilibrium, psi)
-    return N.phi(psi)
+    return N.V(psi)
 end
 
 function electric_potential_gradient(N::EFITEquilibrium, psi)
-    return Interpolations.gradient(N.phi, psi)[1]
+    return Interpolations.gradient(N.V, psi)[1]
 end
 
 function plasma_boundary_psi(N::EFITEquilibrium; precision::Float64=1E-3, r::AbstractRange=N.r, z::AbstractRange=N.z)
