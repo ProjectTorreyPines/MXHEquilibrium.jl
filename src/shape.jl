@@ -532,7 +532,7 @@ function mxh_rz(r, θ, R0, Z0, κ, c0, c::SVector{N}, s::SVector{N}) where N
 
     θ_R = θ + c0 + c_sum + s_sum
     x = R0 + r*cos(θ_R)
-    y = Z0 + κ*r*sin(θ)
+    y = Z0 - κ*r*sin(θ)
 
     return x, y
 end
