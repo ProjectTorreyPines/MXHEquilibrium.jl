@@ -5,8 +5,8 @@ function MXH_parameters(bdry::Boundary; N=7, kwargs...)
     Z0 = mxh.Z0
     κ = mxh.κ
     ϵ = mxh.ϵ
-    c0 = mxh.c0
-    c = mxh.c
+    c0 = -mxh.c0
+    c = -mxh.c
     s = mxh.s
 
     return R0, Z0, ϵ, κ, c0, c, s
