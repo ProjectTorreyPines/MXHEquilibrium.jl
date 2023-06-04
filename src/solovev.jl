@@ -325,7 +325,7 @@ function Base.convert(::Type{SolovevEquilibrium{T,N,R}}, M0::SolovevEquilibrium)
     beta_p = convert(T,M0.beta_p)
     beta_t = convert(T,M0.beta_t)
     c = convert(SVector{length(M0.c),R},M0.c)
-    if M0.x_point == nothing
+    if M0.x_point === nothing
         x_point = nothing
     else
         x_point = T.(M0.x_point)
