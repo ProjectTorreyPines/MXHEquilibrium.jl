@@ -384,7 +384,7 @@ Keyword Arguments:\\
                  diverted::Bool = false,
                  x_point::Union{NTuple{2},Nothing} = (diverted ? scale_aspect(S,1.1)(3pi/2) : nothing),
                  symmetric::Bool = (x_point === nothing),
-                 assume_shape = false) where T
+                 assume_shape::Bool = false) where T
 
     R0 = major_radius(S)
     Z0 = elevation(S)
