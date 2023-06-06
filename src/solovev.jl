@@ -377,12 +377,14 @@ Keyword Arguments:\\
 `diverted` - If true then equilibrium has one or more x-points\\
 `x_point` - If diverted = true, then x_point is set to (R0*(1-1.1*δ*ϵ), -R0*1.1*κ*ϵ) else nothing\\
 `symmetric` - Is equilibrium up-down symmetric\\
+`assume_shape` - Assume the solved psi(r,z) contour has the same shape as the input shape.
 """
 @memoize LRU(maxsize=cache_size) function solovev(B0, S::PlasmaShape{T}, α, qstar;
                  B0_dir = 1, Ip_dir = 1,
                  diverted::Bool = false,
                  x_point::Union{NTuple{2},Nothing} = (diverted ? scale_aspect(S,1.1)(3pi/2) : nothing),
-                 symmetric::Bool = (x_point === nothing)) where T
+                 symmetric::Bool = (x_point === nothing),
+                 assume_shape = false) where T
 
     R0 = major_radius(S)
     Z0 = elevation(S)
@@ -529,11 +531,10 @@ Keyword Arguments:\\
         x, y = (S(pi/2) .- (0,Z0))./R0
         Ψ_p[12] = _solovev_psi_p_Dxx(x, y, α) + N₃*_solovev_psi_p_Dy(x, y, α)
         Ψ_h[:,12] .= _solovev_polynomials_Dxx(x, y) .+ N₃*_solovev_polynomials_Dy(x, y)
-
         c = SVector{12}(Ψ_h'\(-Ψ_p))
     end
 
-    if !symmetric
+    if assume_shape
         x,y = shape(S, N=100, normed=true)
         bdry = PlasmaBoundary(collect(zip(x,y)))
     else
