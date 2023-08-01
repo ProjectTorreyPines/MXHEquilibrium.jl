@@ -17,6 +17,7 @@ using MeshTools
 import PolygonOps
 import Contour
 import Optim
+import LibGEOS
 
 using CoordinateConventions
 import CoordinateConventions: cocos, identify_cocos, check_cocos, transform_cocos
@@ -73,7 +74,7 @@ export cylindrical_cocos, poloidal_cocos, cylindrical_cocos_indices, poloidal_co
 
 include("boundary.jl")
 export Boundary, PlasmaBoundary, FluxSurface, Wall, in_boundary, in_plasma, in_vessel
-export boundary, flux_surface, plasma_boundary, boundary_extrema
+export boundary, flux_surface, plasma_boundary, boundary_extrema, overlap_metric
 export circumference, average, area, area_average, volume, volume_average, surface_area
 
 include("geometry.jl")
@@ -100,7 +101,7 @@ ovality(S::PlasmaShape) = _not_implemented(S)
 squareness(S::PlasmaShape) = _not_implemented(S)
 
 include("fitting.jl")
-export fit
+export fit, residual
 
 include("solovev.jl")
 export SolovevEquilibrium, solovev, clear_cache

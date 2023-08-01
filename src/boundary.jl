@@ -174,6 +174,22 @@ function limits(b::Boundary; pad=0.2)
     return xlims, ylims
 end
 
+function libgeos_polygon(bdry)
+    str = "POLYGON(("*join(["$x $y" for (x,y) in zip(bdry.r,bdry.z)],",")*"))"
+    return LibGEOS.readgeom(str)
+end
+
+function overlap_metric(p1::LibGEOS.Polygon,p2::LibGEOS.Polygon)
+    try
+        I12 = LibGEOS.area(LibGEOS.intersection(p1,p2))
+        X12 = LibGEOS.area(LibGEOS.symmetricDifference(p1,p2))
+        return (2*I12)/(2*I12 + X12)
+    catch
+    end
+    return 0.0
+end
+overlap_metric(bdry1::Boundary,bdry2::Boundary) = overlap_metric(libgeos_polygon(bdry1),libgeos_polygon(bdry2))
+
 @memoize LRU(maxsize = 5) function circumference(b::Boundary)
     p = b.points
     return sum(@inbounds norm(p[i+1] .- p[i]) for i=1:(length(p)-1))
