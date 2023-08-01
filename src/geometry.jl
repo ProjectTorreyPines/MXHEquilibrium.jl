@@ -115,7 +115,7 @@ function quadrant_squareness(bdry,A,B,p1,p2,quad)
     return (L_OD - L_OC)/L_CE
 end
 
-function plasma_geometry(bdry::Boundary)
+function plasma_geometry(bdry::Boundary; normalize=false)
 
     outer,top,inner,bottom = boundary_extrema(bdry)
 
@@ -159,22 +159,29 @@ function plasma_geometry(bdry::Boundary)
     A, B = p2 .- p1
     ζ_IV = quadrant_squareness(bdry,A,B,p1,p2,4)
 
+    if normalize
+        r = r/R0
+        z_rmax = (z_rmax - Z0)/R0
+        R0 = one(R0)
+        Z0 = zero(Z0)
+    end
+
     return PlasmaGeometricParameters(R0, Z0, r, z_rmax, (κₗ,κᵤ), (δₗ, δᵤ), (ζ_I,ζ_II,ζ_III,ζ_IV))
 end
 
-function plasma_geometry(M::AbstractEquilibrium)
-    return plasma_geometry(shape(M))
+function plasma_geometry(M::AbstractEquilibrium; kwargs...)
+    return plasma_geometry(shape(M); kwargs...)
 end
 
-function flux_surface_geometry(bdry::Boundary)
-    return plasma_geometry(bdry)
+function flux_surface_geometry(bdry::Boundary; kwargs...)
+    return plasma_geometry(bdry; kwargs...)
 end
 
-function plasma_geometry(r::Vector,z::Vector)
+function plasma_geometry(r::Vector,z::Vector; kwargs...)
     bdry = Boundary(r,z)
-    return plasma_geometry(bdry)
+    return plasma_geometry(bdry; kwargs...)
 end
 
-function flux_surface_geometry(r::Vector,z::Vector)
-    return plasma_geometry(r,z)
+function flux_surface_geometry(r::Vector,z::Vector; kwargs...)
+    return plasma_geometry(r,z; kwargs...)
 end

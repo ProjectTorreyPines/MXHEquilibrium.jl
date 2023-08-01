@@ -247,13 +247,13 @@ function shape(S::MillerShape; N=100, normed=false)
     end
 end
 
-function (S::MillerShape)(θ::T) where T<:Number
+function (S::MillerShape)(θ::T; kwargs...) where T<:Number
     r = S.ϵ*S.R0
     x, y = m_rz(r, θ, S.R0, S.Z0, S.κ, S.δ)
     return x,y
 end
 
-function (S::MillerShape)(r::T,θ::T) where T<:Number
+function (S::MillerShape)(r::T,θ::T; kwargs...) where T<:Number
     x, y = m_rz(r, θ, S.R0, S.Z0, S.κ, S.δ)
     return x,y
 end
@@ -329,13 +329,13 @@ function shape(S::AMShape; N=100, normed=false)
     end
 end
 
-function (S::AMShape)(θ::T) where T<:Number
+function (S::AMShape)(θ::T; kwargs...) where T<:Number
     r = S.ϵ*S.R0
     x, y = am_rz(r, θ, S.R0, S.Z0, S.κ, S.δl, S.δu)
     return x,y
 end
 
-function (S::AMShape)(r::T,θ::T) where T<:Number
+function (S::AMShape)(r::T,θ::T; kwargs...) where T<:Number
     x, y = am_rz(r, θ, S.R0, S.Z0, S.κ, S.δl, S.δu)
     return x,y
 end
@@ -412,13 +412,13 @@ function shape(S::TMShape; N=100, normed=false)
     end
 end
 
-function (S::TMShape)(θ::T) where T<:Number
+function (S::TMShape)(θ::T; kwargs...) where T<:Number
     r = S.ϵ*S.R0
     x, y = tm_rz(r, θ, S.R0, S.Z0, S.κ, S.δ, S.ζ)
     return x,y
 end
 
-function (S::TMShape)(r::T,θ::T) where T<:Number
+function (S::TMShape)(r::T,θ::T; kwargs...) where T<:Number
     x, y = tm_rz(r, θ, S.R0, S.Z0, S.κ, S.δ, S.ζ)
     return x,y
 end
@@ -519,14 +519,14 @@ function Base.show(io::IO, S::MXHShape)
     print(io, "  s  = $(round.(S.s,digits=3))")
 end
 
-function mxh_rz(r, θ, R0, Z0, κ, c0, c::SVector{N}, s::SVector{N}) where N
+function mxh_rz(r, θ, R0, Z0, κ, c0, c::SVector{N}, s::SVector{N}; ncoeffs = N) where N
     c_sum = 0.0
-    @inbounds for n=1:N
+    @inbounds for n=1:ncoeffs
         c_sum += c[n]*cos(n*θ)
     end
 
     s_sum = 0.0
-    @inbounds for n=1:N
+    @inbounds for n=1:ncoeffs
         s_sum += s[n]*sin(n*θ)
     end
 
@@ -537,14 +537,14 @@ function mxh_rz(r, θ, R0, Z0, κ, c0, c::SVector{N}, s::SVector{N}) where N
     return x, y
 end
 
-function shape(S::MXHShape; N=100, normed=false)
+function shape(S::MXHShape{M,T}; N=100, normed=false, ncoeffs=M) where {M,T}
     r = S.ϵ*S.R0
 
     x = zeros(N)
     y = zeros(N)
     θ = range(0,2pi,length=N)
     @inbounds for i=1:N
-        x[i], y[i] = mxh_rz(r, θ[i], S.R0, S.Z0, S.κ, S.c0, S.c, S.s)
+        x[i], y[i] = mxh_rz(r, θ[i], S.R0, S.Z0, S.κ, S.c0, S.c, S.s; ncoeffs=ncoeffs)
     end
     if !normed
         return x, y
@@ -553,13 +553,13 @@ function shape(S::MXHShape; N=100, normed=false)
     end
 end
 
-function (S::MXHShape)(θ::T) where T<:Number
+function (S::MXHShape{N,R})(θ::T; kwargs...) where {N,R,T<:Number}
     r = S.ϵ*S.R0
-    return mxh_rz(r, θ, S.R0, S.Z0, S.κ, S.c0, S.c, S.s)
+    return mxh_rz(r, θ, S.R0, S.Z0, S.κ, S.c0, S.c, S.s; kwargs...)
 end
 
-function (S::MXHShape)(r::T,θ::T) where T<:Number
-    return mxh_rz(r, θ, S.R0, S.Z0, S.κ, S.c0, S.c, S.s)
+function (S::MXHShape{N,R})(r::T, θ::T; kwargs...) where {N,R,T<:Number}
+    return mxh_rz(r, θ, S.R0, S.Z0, S.κ, S.c0, S.c, S.s; kwargs...)
 end
 
 """
@@ -691,11 +691,11 @@ function shape(S::LuceShape; N=100, normed=false)
     end
 end
 
-function (S::LuceShape)(θ::T) where T<:Number
+function (S::LuceShape)(θ::T; kwargs...) where T<:Number
     return luce_rz(S.r, θ, S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ)
 end
 
-function (S::LuceShape)(r::T,θ::T) where T<:Number
+function (S::LuceShape)(r::T,θ::T; kwargs...) where T<:Number
     return luce_rz(r, θ, S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ)
 end
 
