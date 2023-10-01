@@ -110,7 +110,7 @@ function boundary_extrema(bdry::Boundary; interp=true)
     return outer, top, inner, bottom
 end
 
-function flux_surface(M::AbstractEquilibrium, psi::Float64, dx::Float64=0.01, dy::Float64=0.01; n_interp=0, raise_error=true, kwargs...)
+function flux_surface(M::AbstractEquilibrium, psi::Float64, dx::Float64=0.01, dy::Float64=0.01; n_interp::Int=0, raise_error::Bool=true, kwargs...)
     maxis = magnetic_axis(M)
     psimag, psibdry = psi_limits(M)
     if abs(psi) >= abs(psimag)
@@ -121,7 +121,8 @@ function flux_surface(M::AbstractEquilibrium, psi::Float64, dx::Float64=0.01, dy
     x = range(xlims...,step=dx)
     y = range(ylims...,step=dy)
     Psi = [M(xx,yy) for xx in x, yy in y]
-    bnd = flux_surface(x, y, Psi, psi; maxis = maxis)
+    
+    bnd = flux_surface(x, y, Psi, psi; maxis)
     if isnothing(bnd) && raise_error
         throw("Could not trace closed flux surface at ψ=$psi. Note that ψ limits are $(psi_limits(M))")
     end
@@ -131,7 +132,7 @@ function flux_surface(M::AbstractEquilibrium, psi::Float64, dx::Float64=0.01, dy
         t = 0:(N-1)
         itp_r = linear_interpolation(t, bnd.r, extrapolation_bc = Periodic())
         itp_z = linear_interpolation(t, bnd.z, extrapolation_bc = Periodic())
-        τ = range(0,N-1,length=n_interp)
+        τ = range(0, N-1, length=n_interp)
         ri = itp_r.(τ)
         zi = itp_z.(τ)
         return Boundary(ri,zi)
