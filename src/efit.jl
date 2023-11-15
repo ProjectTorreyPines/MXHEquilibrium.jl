@@ -107,7 +107,7 @@ function plasma_boundary_psi(N::EFITEquilibrium; precision::Float64=1E-3, r::Abs
             psirange[1] = psimid
             if (precision == 0.0) || (abs(psirange[end] - psirange[1]) < precision)
                 xlims, ylims = limits(bnd)
-                if (precision == 0.0) || any(abs.(vcat(collect(xlims .- rlims), collect(ylims .- zlims))) .< 2 * dd)
+                if (precision == 0.0) || any(abs.(vcat(collect(xlims .- rlims), collect(ylims .- zlims))) .< dd)
                     original_bnd = flux_surface(r, z, Psi, original_psirange[end])
                     if original_bnd === nothing
                         return nothing, nothing
