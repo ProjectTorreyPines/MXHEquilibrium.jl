@@ -112,10 +112,10 @@ function plasma_boundary_psi(N::EFITEquilibrium; precision::Float64=1E-3, r::Abs
                     if original_bnd === nothing
                         return nothing, nothing
                     else
-                        return original_psirange[end], original_bnd
+                        return original_bnd, original_psirange[end]
                     end
                 else
-                    return psimid, bnd
+                    return bnd, psimid
                 end
             end
         else
@@ -127,11 +127,11 @@ function plasma_boundary_psi(N::EFITEquilibrium; precision::Float64=1E-3, r::Abs
 end
 
 @memoize LRU(maxsize=cache_size) function plasma_boundary(N::EFITEquilibrium; kwargs...)
-    psi, bdry = plasma_boundary_psi(N; kwargs...)
+    bdry, psi = plasma_boundary_psi(N; kwargs...)
     return bdry
 end
 
 @memoize LRU(maxsize=cache_size) function psi_boundary(N::EFITEquilibrium; kwargs...)
-    psi, bdry = plasma_boundary_psi(N; kwargs...)
+    bdry, psi = plasma_boundary_psi(N; kwargs...)
     return psi
 end
