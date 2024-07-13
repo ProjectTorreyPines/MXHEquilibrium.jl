@@ -244,3 +244,8 @@ MillerExtendedHarmonicShape{10, Float64}
   ξ  = -0.11595260388302828
   τ  = -0.08051086241624195
 ```
+
+## Online documentation
+For more details, see the [online documentation](https://projecttorreypines.github.io/MXHEquilibrium.jl/dev).
+
+![Docs](https://github.com/ProjectTorreyPines/MXHEquilibrium.jl/actions/workflows/make_docs.yml/badge.svg)
