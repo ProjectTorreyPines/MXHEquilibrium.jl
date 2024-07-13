@@ -124,7 +124,7 @@ function flux_surface(M::AbstractEquilibrium, psi::Float64, dx::Float64=0.01, dy
     
     bnd = flux_surface(x, y, Psi, psi; maxis)
     if isnothing(bnd) && raise_error
-        throw("Could not trace closed flux surface at ψ=$psi. Note that ψ limits are $(psi_limits(M))")
+        error("Could not trace closed flux surface at ψ=$psi. Note that ψ limits are $(psi_limits(M))")
     end
 
     if n_interp > 0
