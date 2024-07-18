@@ -1,7 +1,7 @@
 name = "MXHEquilibrium"
 uuid = "8efa4e5a-7b9a-4eec-876e-01d13d5b5d75"
 authors = ["Luke Stagner <stagnerl@fusion.gat.com>"]
-version = "0.2.8"
+version = "1.0.0"
 
 [deps]
 Contour = "d38c429a-6771-53c6-b99e-75d170b6e991"
