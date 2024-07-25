@@ -35,14 +35,14 @@ Transforms the given `GEQDSKFile` with `COCOS=cc_in`, and returns a `GEQDSKFile`
 function transform_cocos(g::GEQDSKFile, cc_in::Union{Int,COCOS}, cc_out::Union{Int,COCOS}; kwargs...)
     T = transform_cocos(cc_in, cc_out; kwargs...)
 
-    g_new = GEQDSKFile(g.file*" w/ cocos = $(cocos(cc_out).cocos)", g.nw, g.nh,
+    g_new = GEQDSKFile(g.file*" w/ cocos = $(cocos(cc_out).cocos)", g.time, g.nw, g.nh,
                        g.r*T["R"], g.z*T["Z"], g.rdim*T["R"], g.zdim*T["Z"],
                        g.rleft*T["R"], g.zmid*T["Z"], g.nbbbs, g.rbbbs*T["R"], g.zbbbs*T["Z"],
                        g.limitr, g.rlim*T["R"], g.zlim*T["Z"], g.rcentr*T["R"], g.bcentr*T["B"],
                        g.rmaxis*T["R"], g.zmaxis*T["Z"], g.simag*T["PSI"], g.sibry*T["PSI"],
                        g.psi*T["PSI"], g.current*T["I"], g.fpol*T["F"],
                        g.pres*T["P"], g.ffprim*T["F_FPRIME"], g.pprime*T["PPRIME"],
-                       g.qpsi*T["Q"], g.psirz*T["PSI"])
+                       g.qpsi*T["Q"], g.psirz*T["PSI"], g.rhovn)
 
     return g_new
 end
