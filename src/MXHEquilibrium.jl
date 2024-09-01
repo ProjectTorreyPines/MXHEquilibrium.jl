@@ -22,18 +22,18 @@ using CoordinateConventions
 import CoordinateConventions: cocos, identify_cocos, check_cocos, transform_cocos
 import MillerExtendedHarmonic: MXH
 
-const mu0 = 4*pi*1e-7
+const mu0 = 4 * pi * 1e-7
 
 cache_size = 5
 
 function set_cache_size!(N::Int)
     m = @__MODULE__
-    cache = LRU(maxsize=cache_size)
+    cache = LRU(; maxsize=cache_size)
     global cache_size = N
     for f in names(m)
         cachename = Memoize.cache_name(f)
         try
-            cache = getproperty(m,cachename)
+            cache = getproperty(m, cachename)
         catch e
         finally
             resize!(cache; maxsize=cache_size)
@@ -46,8 +46,8 @@ export AbstractEquilibrium
 
 # Equilibrium Fallbacks
 _not_implemented(M) = error("$(typeof(M)) has not implemented this functionality")
-(M::AbstractEquilibrium)(x,y) = _not_implemented(M)
-magnetic_axis(M::AbstractEquilibrium,r,z) = _not_implemented(M)
+(M::AbstractEquilibrium)(x, y) = _not_implemented(M)
+magnetic_axis(M::AbstractEquilibrium, r, z) = _not_implemented(M)
 limits(M::AbstractEquilibrium) = _not_implemented(M)
 psi_limits(M::AbstractEquilibrium) = _not_implemented(M)
 psi_gradient(M::AbstractEquilibrium) = _not_implemented(M)

@@ -20,7 +20,7 @@ function fit(bdry::Boundary, S::MillerExtendedHarmonicShape{N,T}; kwargs...) whe
     return MXHShape(MXH_parameters(bdry; N=N, kwargs...)...)
 end
 
-fit(bdry::Boundary) = fit(bdry,MillerShape())
+fit(bdry::Boundary) = fit(bdry, MillerShape())
 
 function fit(bdry::Boundary, S::MillerShape; kwargs...)
     if length(bdry) == 2
@@ -29,7 +29,7 @@ function fit(bdry::Boundary, S::MillerShape; kwargs...)
     end
 
     G = plasma_geometry(bdry)
-    return MillerShape(G.R0, G.Z0, G.r/G.R0, sum(G.κ)/2, sum(G.δ)/2)
+    return MillerShape(G.R0, G.Z0, G.r / G.R0, sum(G.κ) / 2, sum(G.δ) / 2)
 end
 
 function fit(bdry::Boundary, S::AsymmetricMillerShape; kwargs...)
@@ -38,7 +38,7 @@ function fit(bdry::Boundary, S::AsymmetricMillerShape; kwargs...)
         return s
     end
     G = plasma_geometry(bdry)
-    return AMShape(G.R0, G.Z0, G.r/G.R0, sum(G.κ)/2, G.δ...)
+    return AMShape(G.R0, G.Z0, G.r / G.R0, sum(G.κ) / 2, G.δ...)
 end
 
 function fit(bdry::Boundary, S::TurnbullMillerShape; kwargs...)
@@ -47,7 +47,7 @@ function fit(bdry::Boundary, S::TurnbullMillerShape; kwargs...)
         return s
     end
     G = plasma_geometry(bdry)
-    return TMShape(G.R0, G.Z0, G.r/G.R0, sum(G.κ)/2, sum(G.δ)/2, sum(G.ζ)/4)
+    return TMShape(G.R0, G.Z0, G.r / G.R0, sum(G.κ) / 2, sum(G.δ) / 2, sum(G.ζ) / 4)
 end
 
 function fit(bdry::Boundary, S::LShape; kwargs...)
@@ -61,5 +61,5 @@ end
 
 @memoize LRU(maxsize=cache_size) function shape(M::AbstractEquilibrium; N=10)
     bdry = plasma_boundary(M)
-    return fit(bdry,MXHShape(N))
+    return fit(bdry, MXHShape(N))
 end

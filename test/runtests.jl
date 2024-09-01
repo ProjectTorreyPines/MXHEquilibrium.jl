@@ -6,14 +6,14 @@ using CoordinateConventions
 using EFIT
 
 
-mu0 = 4pi*10^-7
+mu0 = 4pi * 10^-7
 
 @testset "MXHEquilibrium" begin
 
-include("shape.jl")
+    include("shape.jl")
 
-include("solovev.jl")
+    include("solovev.jl")
 
-include("efit.jl")
+    include("efit.jl")
 
 end

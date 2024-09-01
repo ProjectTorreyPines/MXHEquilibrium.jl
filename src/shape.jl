@@ -1,27 +1,27 @@
 abstract type PlasmaShape{T} end
 
 Base.broadcastable(S::PlasmaShape) = (S,)
-Base.eltype(::PlasmaShape{T}) where T = T
+Base.eltype(::PlasmaShape{T}) where {T} = T
 
-function Base.copy(S::T) where T <: PlasmaShape
-    SS = T((getfield(S,s) for s in fieldnames(T))...)
+function Base.copy(S::T) where {T<:PlasmaShape}
+    SS = T((getfield(S, s) for s in fieldnames(T))...)
     return SS
 end
 
-function (S::PlasmaShape)(ρ::T,θ::T,ζ::T) where T<:Number
+function (S::PlasmaShape)(ρ::T, θ::T, ζ::T) where {T<:Number}
     ρ > minor_radius(S) && throw(DomainError("ρ is larger than the minor radius"))
-    r, z = S(ρ,θ)
-    x = r*cos(ζ)
-    y = r*sin(ζ)
-    return x,y,z
+    r, z = S(ρ, θ)
+    x = r * cos(ζ)
+    y = r * sin(ζ)
+    return x, y, z
 end
 
-function (S::PlasmaShape)(x::T) where T <:AbstractVector
+function (S::PlasmaShape)(x::T) where {T<:AbstractVector}
     N = length(x)
     if N == 2
-        return collect(S(x[1],x[2]))
+        return collect(S(x[1], x[2]))
     elseif N == 3
-        return collect(S(x[1],x[2],x[3]))
+        return collect(S(x[1], x[2], x[3]))
     else
         throw(ArgumentError("Length of array can only be 2 or 3"))
     end
@@ -31,35 +31,35 @@ end
 3 element u: Volume element
 2 element u: Internal Area element
 """
-function dVA(S::PlasmaShape,u::T) where T<:AbstractVector
-    @assert length(u) in (2,3)
-    abs(det(ForwardDiff.jacobian(S,u)))
+function dVA(S::PlasmaShape, u::T) where {T<:AbstractVector}
+    @assert length(u) in (2, 3)
+    return abs(det(ForwardDiff.jacobian(S, u)))
 end
 
 """
 Surface area element of a plasma shape at a given position
 """
-function dS(S::PlasmaShape,u::T) where T<:AbstractVector{R} where R
+function dS(S::PlasmaShape, u::T) where {T<:AbstractVector{R}} where {R}
     N = length(u)
     @assert N == 2
-    d1 = zeros(R,3)
-    d2 = zeros(R,3)
+    d1 = zeros(R, 3)
+    d2 = zeros(R, 3)
     r = minor_radius(S)
-    for i=1:3
-        d1[i] = ForwardDiff.derivative(t->S([r,t,u[2]])[i], u[1])
-        d2[i] = ForwardDiff.derivative(t->S([r,u[1],t])[i], u[2])
+    for i in 1:3
+        d1[i] = ForwardDiff.derivative(t -> S([r, t, u[2]])[i], u[1])
+        d2[i] = ForwardDiff.derivative(t -> S([r, u[1], t])[i], u[2])
     end
-    return norm(cross(d1,d2))
+    return norm(cross(d1, d2))
 end
 
 """
 Line element of a a plasma shape at a given position
 """
-function dL(S::PlasmaShape,u::T) where T<:Number
+function dL(S::PlasmaShape, u::T) where {T<:Number}
     d = zeros(2)
     r = minor_radius(S)
-    for i=1:2
-        d[i] = ForwardDiff.derivative(t->S([r,t])[i], u)
+    for i in 1:2
+        d[i] = ForwardDiff.derivative(t -> S([r, t])[i], u)
     end
     return norm(d)
 end
@@ -76,24 +76,24 @@ I = integrate(x->1,S,:surface,(0,2pi),(0,2pi)) # surface area
 I = integrate(x->1,S,:volume,(0,minor_radius(S)),(0,2pi),(0,2pi))
 ```
 """
-function integrate(f::Function, S::PlasmaShape, type::Symbol, bds::Vararg{NTuple{2,Number},N}; kwargs...) where N
+function integrate(f::Function, S::PlasmaShape, type::Symbol, bds::Vararg{NTuple{2,Number},N}; kwargs...) where {N}
     kws = pairs((rtol=1e-3, atol=1e-3, kwargs...))
     if N == 1 && type == :line
         θ_min, θ_max = bds[1]
-        (F,err) = hquadrature(x->f(x)*dL(S,x),θ_min,θ_max; kws...)
+        (F, err) = hquadrature(x -> f(x) * dL(S, x), θ_min, θ_max; kws...)
     elseif N == 2 && type == :surface
         θ_min, θ_max = bds[1]
         ζ_min, ζ_max = bds[2]
-        (F,err) = hcubature(x->f(x)*dS(S,x),(θ_min,ζ_min),(θ_max,ζ_max); kws...)
+        (F, err) = hcubature(x -> f(x) * dS(S, x), (θ_min, ζ_min), (θ_max, ζ_max); kws...)
     elseif N == 2 && type == :area
         r_min, r_max = bds[1]
         θ_min, θ_max = bds[2]
-        (F,err) = hcubature(x->f(x)*dVA(S,x),(r_min, θ_min),(r_max, θ_max); kws...)
+        (F, err) = hcubature(x -> f(x) * dVA(S, x), (r_min, θ_min), (r_max, θ_max); kws...)
     elseif N == 3 && type == :volume
         r_min, r_max = bds[1]
         θ_min, θ_max = bds[2]
         ζ_min, ζ_max = bds[3]
-        (F,err) = hcubature(x->f(x)*dVA(S,x),(r_min,θ_min,ζ_min),(r_max,θ_max,ζ_max); kws...)
+        (F, err) = hcubature(x -> f(x) * dVA(S, x), (r_min, θ_min, ζ_min), (r_max, θ_max, ζ_max); kws...)
     else
         throw(ArgumentError("Unsupported Integral Type: $type : Supported types: :line ∫dθ, :area ∬drdθ, :surface ∬dθdζ, :volume ∭drdθdζ"))
     end
@@ -104,9 +104,9 @@ end
 @memoize LRU(maxsize=cache_size) function integrate(f::Function, S::PlasmaShape, type::Symbol; kwargs...)
 
     if type == :line
-        F_bar = integrate(f, S, :line, (0.0,2pi); kwargs...)
+        F_bar = integrate(f, S, :line, (0.0, 2pi); kwargs...)
     elseif type == :surface
-        F_bar = integrate(f, S, :surface, (0.0,2pi),(0.0,2pi); kwargs...)
+        F_bar = integrate(f, S, :surface, (0.0, 2pi), (0.0, 2pi); kwargs...)
     elseif type == :area
         F_bar = integrate(f, S, :area, (0.0, minor_radius(S)), (0.0, 2pi); kwargs...)
     elseif type == :volume
@@ -117,31 +117,31 @@ end
 end
 
 @memoize LRU(maxsize=cache_size) function circumference(S::PlasmaShape; kwargs...)
-    integrate(x->1, S, :line, (0.0,2pi); kwargs...)
+    return integrate(x -> 1, S, :line, (0.0, 2pi); kwargs...)
 end
 
 @memoize LRU(maxsize=cache_size) function area(S::PlasmaShape; kwargs...)
-    integrate(x->1, S, :area, (0.0,minor_radius(S)), (0.0,2pi); kwargs...)
+    return integrate(x -> 1, S, :area, (0.0, minor_radius(S)), (0.0, 2pi); kwargs...)
 end
 
 @memoize LRU(maxsize=cache_size) function surface_area(S::PlasmaShape; kwargs...)
-    integrate(x->1,S,:surface, (0.0,2pi), (0.0,2pi); kwargs...)
+    return integrate(x -> 1, S, :surface, (0.0, 2pi), (0.0, 2pi); kwargs...)
 end
 
 @memoize LRU(maxsize=cache_size) function volume(S::PlasmaShape; kwargs...)
-    integrate(x->1, S, :volume, (0.0,minor_radius(S)), (0.0,2pi), (0.0,2pi); kwargs...)
+    return integrate(x -> 1, S, :volume, (0.0, minor_radius(S)), (0.0, 2pi), (0.0, 2pi); kwargs...)
 end
 
 @memoize LRU(maxsize=cache_size) function average(f::Function, S::PlasmaShape, type::Symbol; kwargs...)
 
     if type == :line
-        F_bar = integrate(f, S, :line, (0.0,2pi); kwargs...)/circumference(S; kwargs...)
+        F_bar = integrate(f, S, :line, (0.0, 2pi); kwargs...) / circumference(S; kwargs...)
     elseif type == :surface
-        F_bar = integrate(f, S, :surface, (0.0,2pi),(0.0,2pi); kwargs...)/surface_area(S; kwargs...)
+        F_bar = integrate(f, S, :surface, (0.0, 2pi), (0.0, 2pi); kwargs...) / surface_area(S; kwargs...)
     elseif type == :area
-        F_bar = integrate(f, S, :area, (0.0, minor_radius(S)), (0.0, 2pi); kwargs...)/area(S; kwargs...)
+        F_bar = integrate(f, S, :area, (0.0, minor_radius(S)), (0.0, 2pi); kwargs...) / area(S; kwargs...)
     elseif type == :volume
-        F_bar = integrate(f, S, :volume, (0.0, minor_radius(S)), (0.0, 2pi), (0.0, 2pi); kwargs...)/volume(S; kwargs...)
+        F_bar = integrate(f, S, :volume, (0.0, minor_radius(S)), (0.0, 2pi), (0.0, 2pi); kwargs...) / volume(S; kwargs...)
     else
         throw(ArgumentError("Unsupported Average Type: $type : Supported types: :line ∫dθ, :area ∬drdθ, :surface ∬dθdζ, :volume ∭drdθdζ"))
     end
@@ -155,28 +155,28 @@ function limits(s::T, x_point=nothing; pad=0.2) where {T<:PlasmaShape}
     xlims = (max(xlims[1] - xpad * pad, 0.0), xlims[2] + xpad * pad)
     ylims = (ylims[1] - ypad * pad, ylims[2] + ypad * pad)
     if x_point !== nothing
-        xlims = (min(xlims[1],x_point[1]), max(xlims[2],x_point[1]))
-        ylims = (min(ylims[1],x_point[2]), max(ylims[2],x_point[2]))
+        xlims = (min(xlims[1], x_point[1]), max(xlims[2], x_point[1]))
+        ylims = (min(ylims[1], x_point[2]), max(ylims[2], x_point[2]))
     end
     return xlims, ylims
 end
 
 function plasma_boundary(S::PlasmaShape; kwargs...)
-    x,y = shape(S; kwargs...)
-    return PlasmaBoundary(collect(zip(x[1:end-1],y[1:end-1])))
+    x, y = shape(S; kwargs...)
+    return PlasmaBoundary(collect(zip(x[1:end-1], y[1:end-1])))
 end
 
-function scale_aspect(S::T,s) where T<:PlasmaShape
-    return T((f == :ϵ ? s*getfield(S,f) : getfield(S,f) for f in fieldnames(T))...)
+function scale_aspect(S::T, s) where {T<:PlasmaShape}
+    return T((f == :ϵ ? s * getfield(S, f) : getfield(S, f) for f in fieldnames(T))...)
 end
 
-function Base.getproperty(S::PlasmaShape,s::Symbol)
+function Base.getproperty(S::PlasmaShape, s::Symbol)
     if s == :_get_x
         return x -> S(x)[1]
     elseif s == :_get_y
         return x -> S(x)[2]
     end
-    return getfield(S,s)
+    return getfield(S, s)
 end
 
 """
@@ -203,15 +203,15 @@ const MShape = MillerShape
 
 MillerShape() = MillerShape(0.0, 0.0, 0.0, 0.0, 0.0)
 
-function MillerShape(R0,Z0,ϵ,κ,δ)
-    MillerShape(promote(R0,Z0,ϵ,κ,δ)...)
+function MillerShape(R0, Z0, ϵ, κ, δ)
+    return MillerShape(promote(R0, Z0, ϵ, κ, δ)...)
 end
 
 # Miller Shape API
 aspect_ratio(S::MillerShape) = inv(S.ϵ)
 elongation(S::MillerShape) = S.κ
 major_radius(S::MillerShape) = S.R0
-minor_radius(S::MillerShape) = S.R0*S.ϵ
+minor_radius(S::MillerShape) = S.R0 * S.ϵ
 elevation(S::MillerShape) = S.Z0
 triangularity(S::MillerShape) = S.δ
 
@@ -221,7 +221,7 @@ function Base.show(io::IO, S::MillerShape)
     print(io, "  Z0 = $(round(elevation(S),digits=3)) [m]\n")
     print(io, "  ϵ  = $(round(inv(aspect_ratio(S)),digits=3))\n")
     print(io, "  κ  = $(round(elongation(S),digits=3))\n")
-    print(io, "  δ  = $(round(triangularity(S),digits=3))")
+    return print(io, "  δ  = $(round(triangularity(S),digits=3))")
 end
 
 function m_rz(r, θ, R0, Z0, κ, δ)
@@ -232,30 +232,30 @@ function m_rz(r, θ, R0, Z0, κ, δ)
 end
 
 function shape(S::MillerShape; N=100, normed=false)
-    r = S.ϵ*S.R0
+    r = S.ϵ * S.R0
 
     x = zeros(N)
     y = zeros(N)
-    τ = range(0,2pi,length=N)
-    @inbounds for i=1:N
+    τ = range(0, 2pi; length=N)
+    @inbounds for i in 1:N
         x[i], y[i] = m_rz(r, τ[i], S.R0, S.Z0, S.κ, S.δ)
     end
     if !normed
         return x, y
     else
-        return x/S.R0, (y .- S.Z0)/S.R0
+        return x / S.R0, (y .- S.Z0) / S.R0
     end
 end
 
-function (S::MillerShape)(θ::T) where T<:Number
-    r = S.ϵ*S.R0
+function (S::MillerShape)(θ::T) where {T<:Number}
+    r = S.ϵ * S.R0
     x, y = m_rz(r, θ, S.R0, S.Z0, S.κ, S.δ)
-    return x,y
+    return x, y
 end
 
-function (S::MillerShape)(r::T,θ::T) where T<:Number
+function (S::MillerShape)(r::T, θ::T) where {T<:Number}
     x, y = m_rz(r, θ, S.R0, S.Z0, S.κ, S.δ)
-    return x,y
+    return x, y
 end
 
 """
@@ -284,16 +284,16 @@ const AMShape = AsymmetricMillerShape
 
 AsymmetricMillerShape() = AsymmetricMillerShape(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
-function AsymmetricMillerShape(R0,Z0,ϵ,κ,δl,δu)
-    MillerShape(promote(R0,Z0,ϵ,κ,δl,δu)...)
+function AsymmetricMillerShape(R0, Z0, ϵ, κ, δl, δu)
+    return MillerShape(promote(R0, Z0, ϵ, κ, δl, δu)...)
 end
 
 aspect_ratio(S::AMShape) = inv(S.ϵ)
 elongation(S::AMShape) = S.κ
 major_radius(S::AMShape) = S.R0
-minor_radius(S::AMShape) = S.R0*S.ϵ
+minor_radius(S::AMShape) = S.R0 * S.ϵ
 elevation(S::AMShape) = S.Z0
-triangularity(S::AMShape) = (S.δl,S.δu)
+triangularity(S::AMShape) = (S.δl, S.δu)
 
 function Base.show(io::IO, S::AMShape)
     print(io, "$(typeof(S))\n")
@@ -301,7 +301,7 @@ function Base.show(io::IO, S::AMShape)
     print(io, "  Z0 = $(round(elevation(S),digits=3)) [m]\n")
     print(io, "  ϵ  = $(round(inv(aspect_ratio(S)),digits=3))\n")
     print(io, "  κ  = $(round(elongation(S),digits=3))\n")
-    print(io, "  δ  = $(round.(triangularity(S),digits=3))")
+    return print(io, "  δ  = $(round.(triangularity(S),digits=3))")
 end
 
 function am_rz(r, θ, R0, Z0, κ, δl, δu)
@@ -314,36 +314,37 @@ function am_rz(r, θ, R0, Z0, κ, δl, δu)
 end
 
 function shape(S::AMShape; N=100, normed=false)
-    r = S.ϵ*S.R0
+    r = S.ϵ * S.R0
 
     x = zeros(N)
     y = zeros(N)
-    τ = range(0,2pi,length=N)
-    @inbounds for i=1:N
+    τ = range(0, 2pi; length=N)
+    @inbounds for i in 1:N
         x[i], y[i] = am_rz(r, τ[i], S.R0, S.Z0, S.κ, S.δl, S.δu)
     end
     if !normed
         return x, y
     else
-        return x/S.R0, (y .- S.Z0)/S.R0
+        return x / S.R0, (y .- S.Z0) / S.R0
     end
 end
 
-function (S::AMShape)(θ::T) where T<:Number
-    r = S.ϵ*S.R0
+function (S::AMShape)(θ::T) where {T<:Number}
+    r = S.ϵ * S.R0
     x, y = am_rz(r, θ, S.R0, S.Z0, S.κ, S.δl, S.δu)
-    return x,y
+    return x, y
 end
 
-function (S::AMShape)(r::T,θ::T) where T<:Number
+function (S::AMShape)(r::T, θ::T) where {T<:Number}
     x, y = am_rz(r, θ, S.R0, S.Z0, S.κ, S.δl, S.δu)
-    return x,y
+    return x, y
 end
 
 """
 TurnbullMillerShape Structure
 
 Defines the Turnbull-Miller Plasma Shape Parameterization\\
+
 > Turnbull, A. D., et al. "Improved magnetohydrodynamic stability through optimization of higher order moments in cross-section shape of tokamaks." Physics of Plasmas 6.4 (1999): 1113-1116.
 
 Fields:\\
@@ -367,14 +368,14 @@ const TMShape = TurnbullMillerShape
 
 TurnbullMillerShape() = TurnbullMillerShape(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
-function TurnbullMillerShape(R0,Z0,ϵ,κ,δ,ζ)
-    TurnbullMillerShape(promote(R0,Z0,ϵ,κ,δ,ζ)...)
+function TurnbullMillerShape(R0, Z0, ϵ, κ, δ, ζ)
+    return TurnbullMillerShape(promote(R0, Z0, ϵ, κ, δ, ζ)...)
 end
 
 aspect_ratio(S::TMShape) = inv(S.ϵ)
 elongation(S::TMShape) = S.κ
 major_radius(S::TMShape) = S.R0
-minor_radius(S::TMShape) = S.R0*S.ϵ
+minor_radius(S::TMShape) = S.R0 * S.ϵ
 elevation(S::TMShape) = S.Z0
 triangularity(S::TMShape) = S.δ
 squareness(S::TMShape) = S.ζ
@@ -386,51 +387,52 @@ function Base.show(io::IO, S::TMShape)
     print(io, "  ϵ  = $(round(inv(aspect_ratio(S)),digits=3))\n")
     print(io, "  κ  = $(round(elongation(S),digits=3))\n")
     print(io, "  δ  = $(round(triangularity(S),digits=3))\n")
-    print(io, "  ζ  = $(round(squareness(S),digits=3))")
+    return print(io, "  ζ  = $(round(squareness(S),digits=3))")
 end
 
 function tm_rz(r, θ, R0, Z0, κ, δ, ζ)
     δ₀ = asin(δ)
-    x = R0 + r * cos(θ + δ₀*sin(θ))
-    y = Z0 + r * κ * sin(θ + ζ*sin(2*θ))
+    x = R0 + r * cos(θ + δ₀ * sin(θ))
+    y = Z0 + r * κ * sin(θ + ζ * sin(2 * θ))
     return x, y
 end
 
 function shape(S::TMShape; N=100, normed=false)
-    r = S.ϵ*S.R0
+    r = S.ϵ * S.R0
 
     x = zeros(N)
     y = zeros(N)
-    τ = range(0,2pi,length=N)
-    @inbounds for i=1:N
+    τ = range(0, 2pi; length=N)
+    @inbounds for i in 1:N
         x[i], y[i] = tm_rz(r, τ[i], S.R0, S.Z0, S.κ, S.δ, S.ζ)
     end
     if !normed
         return x, y
     else
-        return x/S.R0, (y .- S.Z0)/S.R0
+        return x / S.R0, (y .- S.Z0) / S.R0
     end
 end
 
-function (S::TMShape)(θ::T) where T<:Number
-    r = S.ϵ*S.R0
+function (S::TMShape)(θ::T) where {T<:Number}
+    r = S.ϵ * S.R0
     x, y = tm_rz(r, θ, S.R0, S.Z0, S.κ, S.δ, S.ζ)
-    return x,y
+    return x, y
 end
 
-function (S::TMShape)(r::T,θ::T) where T<:Number
+function (S::TMShape)(r::T, θ::T) where {T<:Number}
     x, y = tm_rz(r, θ, S.R0, S.Z0, S.κ, S.δ, S.ζ)
-    return x,y
+    return x, y
 end
 
 function TurnbullMillerShape(S::MillerShape)
-    TurnbullMillerShape(S.R0, S.Z0, S.ϵ, S.κ, S.δ, zero(S.δ))
+    return TurnbullMillerShape(S.R0, S.Z0, S.ϵ, S.κ, S.δ, zero(S.δ))
 end
 
 """
 MillerExtendedHarmonicShape Structure
 
 Defines the Miller Extended Harmonic Plasma Shape Parameterization\\
+
 > Arbon, Ryan, Jeff Candy, and Emily A. Belli. "Rapidly-convergent flux-surface shape parameterization." Plasma Physics and Controlled Fusion 63.1 (2020): 012001.
 
 Fields:\\
@@ -442,7 +444,7 @@ Fields:\\
 `c`  - Cosine coefficients i.e. [ovality,...]\\
 `s`  - Sine coefficients i.e. [asin(triangularity), squareness,...])
 """
-struct MillerExtendedHarmonicShape{N, T} <: PlasmaShape{T}
+struct MillerExtendedHarmonicShape{N,T} <: PlasmaShape{T}
     R0::T           # Major Radius
     Z0::T           # Elevation
     ϵ::T            # inverse aspect ratio a/R0
@@ -466,41 +468,41 @@ end
 function MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, c0, c::Vector, s::Vector)
     @assert length(c) == length(s)
 
-    R0, Z0, ϵ, κ, c0 = promote(R0,Z0,ϵ,κ,c0, one(eltype(s)), one(eltype(c)))
+    R0, Z0, ϵ, κ, c0 = promote(R0, Z0, ϵ, κ, c0, one(eltype(s)), one(eltype(c)))
     N = length(c)
     if N == 0 && c0 == zero(R0)
-        return MillerShape(R0,Z0,ϵ,κ,c0)
+        return MillerShape(R0, Z0, ϵ, κ, c0)
     end
-    c = convert(SVector{N, typeof(R0)}, c)
-    s = convert(SVector{N, typeof(R0)}, s)
+    c = convert(SVector{N,typeof(R0)}, c)
+    s = convert(SVector{N,typeof(R0)}, s)
 
-    MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, c0, c, s)
+    return MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, c0, c, s)
 end
 
-function MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, δ; tilt=zero(κ), c0=tilt, ovality=one(R0), squareness=zero(R0))
-    R0, Z0, ϵ, κ, c0, ovality, squareness = promote(R0,Z0,ϵ,κ,c0,ovality,squareness)
+function MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, δ; tilt=zero(κ), ovality=zero(R0), squareness=zero(R0))
+    R0, Z0, ϵ, κ, tilt, ovality, squareness = promote(R0, Z0, ϵ, κ, tilt, ovality, squareness)
     Z = zero(R0)
-    if δ == Z && c0 == Z && ovality == Z && squareness == Z
-        return MillerShape(R0,Z0,ϵ,κ,δ)
+    if δ == Z && tilt == Z && ovality == Z && squareness == Z
+        return MillerShape(R0, Z0, ϵ, κ, δ)
     end
     c = SVector(ovality, zero(ovality))
     s = SVector(asin(δ), -squareness)
 
-    MillerExtendedHarmonicShape(R0,Z0,ϵ,κ,c0,c,s)
+    return MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, tilt, c, s)
 end
 
 function MillerExtendedHarmonicShape(S::MillerShape)
-    MXHShape(S.R0,S.Z0,S.ϵ,S.κ,zero(S.δ), SVector(zero(S.δ)), SVector(asin.(S.δ)))
+    return MXHShape(S.R0, S.Z0, S.ϵ, S.κ, zero(S.δ), SVector(zero(S.δ)), SVector(asin.(S.δ)))
 end
 
 function MillerExtendedHarmonicShape(S::TurnbullMillerShape)
-    MXHShape(S.R0, S.Z0, S.ϵ, S.κ, zero(S.δ), SVector(zero(S.δ),zero(S.δ)), SVector(asin.(S.δ),-S.ζ))
+    return MXHShape(S.R0, S.Z0, S.ϵ, S.κ, zero(S.δ), SVector(zero(S.δ), zero(S.δ)), SVector(asin.(S.δ), -S.ζ))
 end
 
 aspect_ratio(S::MXHShape) = inv(S.ϵ)
 elongation(S::MXHShape) = S.κ
 major_radius(S::MXHShape) = S.R0
-minor_radius(S::MXHShape) = S.R0*S.ϵ
+minor_radius(S::MXHShape) = S.R0 * S.ϵ
 elevation(S::MXHShape) = S.Z0
 tilt(S::MXHShape) = S.c0
 ovality(S::MXHShape) = S.c[1]
@@ -516,49 +518,49 @@ function Base.show(io::IO, S::MXHShape)
     print(io, "  κ  = $(round(elongation(S),digits=3))\n")
     print(io, "  c₀ = $(round(tilt(S),digits=3))\n")
     print(io, "  c  = $(round.(S.c,digits=3))\n")
-    print(io, "  s  = $(round.(S.s,digits=3))")
+    return print(io, "  s  = $(round.(S.s,digits=3))")
 end
 
-function mxh_rz(r, θ, R0, Z0, κ, c0, c::SVector{N}, s::SVector{N}) where N
+function mxh_rz(r, θ, R0, Z0, κ, c0, c::SVector{N}, s::SVector{N}) where {N}
     c_sum = 0.0
-    @inbounds for n=1:N
-        c_sum += c[n]*cos(n*θ)
+    @inbounds for n in 1:N
+        c_sum += c[n] * cos(n * θ)
     end
 
     s_sum = 0.0
-    @inbounds for n=1:N
-        s_sum += s[n]*sin(n*θ)
+    @inbounds for n in 1:N
+        s_sum += s[n] * sin(n * θ)
     end
 
     θ_R = θ + c0 + c_sum + s_sum
-    x = R0 + r*cos(θ_R)
-    y = Z0 + κ*r*sin(θ)
+    x = R0 + r * cos(θ_R)
+    y = Z0 + κ * r * sin(θ)
 
     return x, y
 end
 
 function shape(S::MXHShape; N=100, normed=false)
-    r = S.ϵ*S.R0
+    r = S.ϵ * S.R0
 
     x = zeros(N)
     y = zeros(N)
-    θ = range(0,2pi,length=N)
-    @inbounds for i=1:N
+    θ = range(0, 2pi; length=N)
+    @inbounds for i in 1:N
         x[i], y[i] = mxh_rz(r, θ[i], S.R0, S.Z0, S.κ, S.c0, S.c, S.s)
     end
     if !normed
         return x, y
     else
-        return x/S.R0, (y .- S.Z0)/S.R0
+        return x / S.R0, (y .- S.Z0) / S.R0
     end
 end
 
-function (S::MXHShape)(θ::T) where T<:Number
-    r = S.ϵ*S.R0
+function (S::MXHShape)(θ::T) where {T<:Number}
+    r = S.ϵ * S.R0
     return mxh_rz(r, θ, S.R0, S.Z0, S.κ, S.c0, S.c, S.s)
 end
 
-function (S::MXHShape)(r::T,θ::T) where T<:Number
+function (S::MXHShape)(r::T, θ::T) where {T<:Number}
     return mxh_rz(r, θ, S.R0, S.Z0, S.κ, S.c0, S.c, S.s)
 end
 
@@ -566,16 +568,16 @@ end
 Luce Plasma Shape as described in:
 
 > "An analytic functional form for characterization and generation of axisymmetric plasma boundaries",\\
-TC Luce, Plasma Phys. Control. Fusion 55 (2013) http://dx.doi.org/10.1088/0741-3335/55/9/095009
+> TC Luce, Plasma Phys. Control. Fusion 55 (2013) http://dx.doi.org/10.1088/0741-3335/55/9/095009
 
 Fields:\\
-  `R0` - Major Radius [m]\\
-  `Z0` - Elevation [m]\\
-  `r`  - Minor Radius [m]\\
-  `Zᵣₘ` - Z(Rₘₐₓ) [m]\\
-  `κ`  - Lower and Upper Elongation\\
-  `δ`  - Lower and Upper Triangulation\\
-  `ζ`  - Squareness for the I,II,III,IV quadrants
+`R0` - Major Radius [m]\\
+`Z0` - Elevation [m]\\
+`r`  - Minor Radius [m]\\
+`Zᵣₘ` - Z(Rₘₐₓ) [m]\\
+`κ`  - Lower and Upper Elongation\\
+`δ`  - Lower and Upper Triangulation\\
+`ζ`  - Squareness for the I,II,III,IV quadrants
 """
 struct LuceShape{T} <: PlasmaShape{T}
     R0::T          # Major Radius
@@ -589,22 +591,22 @@ end
 
 const LShape = LuceShape
 
-LuceShape() = LuceShape(0.0, 0.0, 0.0, 0.0, (0.0,0.0), (0.0,0.0), (0.0,0.0,0.0,0.0))
+LuceShape() = LuceShape(0.0, 0.0, 0.0, 0.0, (0.0, 0.0), (0.0, 0.0), (0.0, 0.0, 0.0, 0.0))
 
-function LuceShape(R0,Z0,r,Zrm,κ::NTuple{2},δ::NTuple{2},ζ::NTuple{4})
-    R0,Z0,r,Zrm = promote(R0,Z0,r,Zrm)
+function LuceShape(R0, Z0, r, Zrm, κ::NTuple{2}, δ::NTuple{2}, ζ::NTuple{4})
+    R0, Z0, r, Zrm = promote(R0, Z0, r, Zrm)
     κ = convert.(typeof(R0), κ)
     δ = convert.(typeof(R0), δ)
     ζ = convert.(typeof(R0), ζ)
-    LuceShape(R0,Z0,r,Zrm,κ,δ,ζ)
+    return LuceShape(R0, Z0, r, Zrm, κ, δ, ζ)
 end
 
 function LuceShape(G::PlasmaGeometricParameters)
-    LuceShape(getfield.(G,fieldnames(typeof(G)))...)
+    return LuceShape(getfield.(G, fieldnames(typeof(G)))...)
 end
 
-function LuceShape(r::Vector,z::Vector)
-    G = plasma_geometry(r,z)
+function LuceShape(r::Vector, z::Vector)
+    G = plasma_geometry(r, z)
     return LuceShape(G)
 end
 
@@ -616,10 +618,10 @@ function Base.show(io::IO, G::LuceShape)
     print(io, "  Zᵣₘ= $(round.(G.Zᵣₘ,digits=3)) [m]\n")
     print(io, "  κ  = $(round.(G.κ,digits=3))\n")
     print(io, "  δ  = $(round.(G.δ,digits=3))\n")
-    print(io, "  ζ  = $(round.(G.ζ,digits=3))")
+    return print(io, "  ζ  = $(round.(G.ζ,digits=3))")
 end
 
-aspect_ratio(S::LShape) = S.r/S.R0
+aspect_ratio(S::LShape) = S.r / S.R0
 elongation(S::LShape) = S.κ
 major_radius(S::LShape) = S.R0
 minor_radius(S::LShape) = S.r
@@ -627,51 +629,51 @@ elevation(S::LShape) = S.Z0
 triangularity(S::LShape) = S.δ
 squareness(S::LShape) = S.ζ
 
-function superellipse(t,A,B,n)
+function superellipse(t, A, B, n)
     st, ct = sincos(t)
-    x = abs(ct)^(2/n) * A*sign(ct)
-    y = abs(st)^(2/n) * B*sign(st)
+    x = abs(ct)^(2 / n) * A * sign(ct)
+    y = abs(st)^(2 / n) * B * sign(st)
     return x, y
 end
 
 function luce_rz(r, θ, R0, Z0, Zrm, κ::NTuple{2}, δ::NTuple{2}, ζ::NTuple{4})
 
     θ = mod2pi(θ)
-    if 0 <= θ < pi/2
+    if 0 <= θ < pi / 2
         t = θ
-        A = r*(1 + δ[2])
-        B = κ[2]*r
-        n = -log(2)/log(inv(sqrt(2)) + ζ[1]*(1 - inv(sqrt(2))))
+        A = r * (1 + δ[2])
+        B = κ[2] * r
+        n = -log(2) / log(inv(sqrt(2)) + ζ[1] * (1 - inv(sqrt(2))))
 
-        x, y = superellipse(t,A,B,n)
-        R = x + r*(inv(r/R0) - δ[2])
+        x, y = superellipse(t, A, B, n)
+        R = x + r * (inv(r / R0) - δ[2])
         Z = y + Zrm
-    elseif pi/2 <= θ < pi
+    elseif pi / 2 <= θ < pi
         t = pi - θ
-        A = r*(1 - δ[2])
-        B = κ[2]*r
-        n = -log(2)/log(inv(sqrt(2)) + ζ[2]*(1 - inv(sqrt(2))))
+        A = r * (1 - δ[2])
+        B = κ[2] * r
+        n = -log(2) / log(inv(sqrt(2)) + ζ[2] * (1 - inv(sqrt(2))))
 
-        x, y = superellipse(t,A,B,n)
-        R = r*(inv(r/R0) - δ[2]) - x
+        x, y = superellipse(t, A, B, n)
+        R = r * (inv(r / R0) - δ[2]) - x
         Z = y + Zrm
-    elseif pi <= θ < 3pi/2
+    elseif pi <= θ < 3pi / 2
         t = θ - pi
-        A = r*(1 - δ[1])
-        B = κ[1]*r
-        n = -log(2)/log(inv(sqrt(2)) + ζ[3]*(1 - inv(sqrt(2))))
+        A = r * (1 - δ[1])
+        B = κ[1] * r
+        n = -log(2) / log(inv(sqrt(2)) + ζ[3] * (1 - inv(sqrt(2))))
 
-        x, y = superellipse(t,A,B,n)
-        R = r*(inv(r/R0) - δ[1]) - x
+        x, y = superellipse(t, A, B, n)
+        R = r * (inv(r / R0) - δ[1]) - x
         Z = Zrm - y
     else
         t = 2pi - θ
-        A = r*(1 + δ[1])
-        B = κ[1]*r
-        n = -log(2)/log(inv(sqrt(2)) + ζ[4]*(1 - inv(sqrt(2))))
+        A = r * (1 + δ[1])
+        B = κ[1] * r
+        n = -log(2) / log(inv(sqrt(2)) + ζ[4] * (1 - inv(sqrt(2))))
 
-        x, y = superellipse(t,A,B,n)
-        R = x + r*(inv(r/R0) - δ[1])
+        x, y = superellipse(t, A, B, n)
+        R = x + r * (inv(r / R0) - δ[1])
         Z = Zrm - y
     end
     return R, Z
@@ -680,76 +682,76 @@ end
 function shape(S::LuceShape; N=100, normed=false)
     x = zeros(N)
     y = zeros(N)
-    θ = range(0,2pi,length=N)
-    @inbounds for i=1:N
+    θ = range(0, 2pi; length=N)
+    @inbounds for i in 1:N
         x[i], y[i] = luce_rz(S.r, θ[i], S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ)
     end
     if !normed
         return x, y
     else
-        return x/S.R0, (y .- S.Z0)/S.R0
+        return x / S.R0, (y .- S.Z0) / S.R0
     end
 end
 
-function (S::LuceShape)(θ::T) where T<:Number
+function (S::LuceShape)(θ::T) where {T<:Number}
     return luce_rz(S.r, θ, S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ)
 end
 
-function (S::LuceShape)(r::T,θ::T) where T<:Number
+function (S::LuceShape)(r::T, θ::T) where {T<:Number}
     return luce_rz(r, θ, S.R0, S.Z0, S.Zᵣₘ, S.κ, S.δ, S.ζ)
 end
 
 # --- Conversion and Promotions ---
-(::Type{T})(S::PlasmaShape) where T<:PlasmaShape = convert(T,S)
-Base.convert(::Type{<:PlasmaShape{T}}, x) where T = T(x)
+(::Type{T})(S::PlasmaShape) where {T<:PlasmaShape} = convert(T, S)
+Base.convert(::Type{<:PlasmaShape{T}}, x) where {T} = T(x)
 
-for S in (MShape,AMShape,TMShape,LShape)
+for S in (MShape, AMShape, TMShape, LShape)
     @eval begin
-        function Base.convert(SS::Type{<:PlasmaShape{T}},W::$S{R}) where {T,R}
-            return convert($S{T},W)
+        function Base.convert(SS::Type{<:PlasmaShape{T}}, W::$S{R}) where {T,R}
+            return convert($S{T}, W)
         end
 
-        function Base.convert(::Type{$S{T}},W::$S) where T
-            return $S{T}((getfield(W,s) for s in fieldnames($S))...)
+        function Base.convert(::Type{$S{T}}, W::$S) where {T}
+            return $S{T}((getfield(W, s) for s in fieldnames($S))...)
         end
 
-        function Base.promote_rule(::Type{$S{T}},::Type{$S{R}}) where {T,R}
-            return $S{promote_type(T,R)}
+        function Base.promote_rule(::Type{$S{T}}, ::Type{$S{R}}) where {T,R}
+            return $S{promote_type(T, R)}
         end
 
-        function Base.promote_rule(::Type{$S{T}},::Type{R}) where {T,R}
-            return $S{promote_type(T,R)}
+        function Base.promote_rule(::Type{$S{T}}, ::Type{R}) where {T,R}
+            return $S{promote_type(T, R)}
         end
 
-        function Base.promote_rule(::Type{R},::Type{$S{T}}) where {T,R}
-            return $S{promote_type(T,R)}
+        function Base.promote_rule(::Type{R}, ::Type{$S{T}}) where {T,R}
+            return $S{promote_type(T, R)}
         end
     end
 end
 
 # --- Promotion/Conversion for MXHShape ---
-function Base.convert(SS::Type{<:PlasmaShape{T}},W::MXHShape{N,R}) where {N,T,R}
-    return convert(MXHShape{N,T},W)
+function Base.convert(SS::Type{<:PlasmaShape{T}}, W::MXHShape{N,R}) where {N,T,R}
+    return convert(MXHShape{N,T}, W)
 end
 
-function Base.convert(::Type{MXHShape{N,T}},W::MXHShape) where {N,T}
-    return MXHShape{N,T}((getfield(W,s) for s in fieldnames(MXHShape))...)
+function Base.convert(::Type{MXHShape{N,T}}, W::MXHShape) where {N,T}
+    return MXHShape{N,T}((getfield(W, s) for s in fieldnames(MXHShape))...)
 end
 
-function Base.promote_rule(::Type{MXHShape{N,T}},::Type{MXHShape{N,R}}) where {N,T,R}
-    return MXHShape{N,promote_type(T,R)}
+function Base.promote_rule(::Type{MXHShape{N,T}}, ::Type{MXHShape{N,R}}) where {N,T,R}
+    return MXHShape{N,promote_type(T, R)}
 end
 
-function Base.promote_rule(::Type{MXHShape{N,T}},::Type{R}) where {N,T,R}
-    return MXHShape{N,promote_type(T,R)}
+function Base.promote_rule(::Type{MXHShape{N,T}}, ::Type{R}) where {N,T,R}
+    return MXHShape{N,promote_type(T, R)}
 end
 
-function Base.promote_rule(::Type{R},::Type{MXHShape{N,T}}) where {N,T,R}
-    return MXHShape{N,promote_type(T,R)}
+function Base.promote_rule(::Type{R}, ::Type{MXHShape{N,T}}) where {N,T,R}
+    return MXHShape{N,promote_type(T, R)}
 end
 
-function convert_eltype(x::S, ::Type{R}) where {S<:PlasmaShape, R}
-    convert(S.name.wrapper{R},x)
+function convert_eltype(x::S, ::Type{R}) where {S<:PlasmaShape,R}
+    return convert(S.name.wrapper{R}, x)
 end
 
 # --- special cases ----
@@ -759,12 +761,12 @@ end
 
 function plasma_geometry(S::Union{MShape,TMShape})
     Z = zero(S.δ)
-    return PlasmaGeometricParameters(S.R0,S.Z0,S.R0*S.ϵ,S.Z0,(S.κ,S.κ), (S.δ, S.δ),(Z,Z,Z,Z))
+    return PlasmaGeometricParameters(S.R0, S.Z0, S.R0 * S.ϵ, S.Z0, (S.κ, S.κ), (S.δ, S.δ), (Z, Z, Z, Z))
 end
 
 function plasma_geometry(S::AMShape)
     Z = zero(S.δ)
-    return PlasmaGeometricParameters(S.R0,S.Z0,S.R0*S.ϵ, S.Z0, (S.κ,S.κ), (S.δl, S.δu),(Z,Z,Z,Z))
+    return PlasmaGeometricParameters(S.R0, S.Z0, S.R0 * S.ϵ, S.Z0, (S.κ, S.κ), (S.δl, S.δu), (Z, Z, Z, Z))
 end
 
 #--- Curvature calculation via AutoDiff ---
@@ -773,13 +775,13 @@ _d1y(S) = (S._get_y)'
 _d2x(S) = (S._get_x)''
 _d2y(S) = (S._get_y)''
 
-function curvature(S::PlasmaShape,θ)
-    xp  = _d1x(S)(θ)
-    yp  = _d1y(S)(θ)
+function curvature(S::PlasmaShape, θ)
+    xp = _d1x(S)(θ)
+    yp = _d1y(S)(θ)
     xpp = _d2x(S)(θ)
     ypp = _d2y(S)(θ)
 
-    κ = abs(yp*xpp - ypp*xp)/(xp^2 + yp^2)^1.5
+    κ = abs(yp * xpp - ypp * xp) / (xp^2 + yp^2)^1.5
     return κ
 end
 
