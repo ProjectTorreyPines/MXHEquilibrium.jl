@@ -441,8 +441,8 @@ Fields:\\
 `ϵ`  - Inverse Aspect Ratio a/R0 where a = minor radius\\
 `κ`  - Elongation\\
 `c0` - Tilt\\
-`c`  - Cosine coefficients i.e. [ovality,...]\\
-`s`  - Sine coefficients i.e. [asin(triangularity), squareness,...])
+`c`  - Cosine coefficients i.e. [ovality, twist, ...]\\
+`s`  - Sine coefficients i.e. [asin(triangularity), -squareness, ...])
 """
 struct MillerExtendedHarmonicShape{N,T} <: PlasmaShape{T}
     R0::T           # Major Radius
@@ -450,8 +450,8 @@ struct MillerExtendedHarmonicShape{N,T} <: PlasmaShape{T}
     ϵ::T            # inverse aspect ratio a/R0
     κ::T            # Elongation
     c0::T           # Tilt
-    c::SVector{N,T} # Cosine coefficients acos.([ovality,...])
-    s::SVector{N,T} # Sine coefficients asin.([triangularity,-squareness,...]
+    c::SVector{N,T} # Cosine coefficients [ovality, twist, ...]\\
+    s::SVector{N,T} # Sine coefficients [asin(triangularity), -squareness, ...])
 end
 
 const MXHShape = MillerExtendedHarmonicShape
@@ -479,13 +479,13 @@ function MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, c0, c::Vector, s::Vector)
     return MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, c0, c, s)
 end
 
-function MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, δ; tilt=zero(κ), ovality=zero(R0), squareness=zero(R0))
-    R0, Z0, ϵ, κ, tilt, ovality, squareness = promote(R0, Z0, ϵ, κ, tilt, ovality, squareness)
+function MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, δ; tilt=zero(κ), ovality=zero(R0), twist=zero(κ), squareness=zero(R0))
+    R0, Z0, ϵ, κ, tilt, twist, ovality, squareness = promote(R0, Z0, ϵ, κ, tilt, twist, ovality, squareness)
     Z = zero(R0)
-    if δ == Z && tilt == Z && ovality == Z && squareness == Z
+    if δ == Z && tilt == Z && twist == Z && ovality == Z && squareness == Z
         return MillerShape(R0, Z0, ϵ, κ, δ)
     end
-    c = SVector(ovality, zero(ovality))
+    c = SVector(ovality, twist)
     s = SVector(asin(δ), -squareness)
 
     return MillerExtendedHarmonicShape(R0, Z0, ϵ, κ, tilt, c, s)
@@ -506,6 +506,7 @@ minor_radius(S::MXHShape) = S.R0 * S.ϵ
 elevation(S::MXHShape) = S.Z0
 tilt(S::MXHShape) = S.c0
 ovality(S::MXHShape) = S.c[1]
+twist(S::MXHShape) = S.c[2]
 triangularity(S::MXHShape) = sin(S.s[1])
 # MXH squareness differs from TurnbullMiller, using MXH paper's definition
 squareness(S::MXHShape) = -S.s[2]

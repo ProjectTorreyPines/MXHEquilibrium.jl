@@ -82,7 +82,7 @@ export PlasmaGeometricParameters, plasma_geometry, flux_surface_geometry
 include("shape.jl")
 export PlasmaShape, MillerShape, TurnbullMillerShape, MillerExtendedHarmonicShape, LuceShape
 export AsymmetricMillerShape, AMShape, MShape, TMShape, MXHShape, LShape, shape
-export curvature, triangularity, squareness, tilt, elevation, ovality
+export curvature, triangularity, squareness, tilt, elevation, ovality, twist
 export scale_aspect, elongation, aspect_ratio, major_radius, minor_radius
 export convert_eltype
 
@@ -97,6 +97,7 @@ elevation(S::PlasmaShape) = _not_implemented(S)
 triangularity(S::PlasmaShape) = _not_implemented(S)
 tilt(S::PlasmaShape) = _not_implemented(S)
 ovality(S::PlasmaShape) = _not_implemented(S)
+twist(S::PlasmaShape) = _not_implemented(S)
 squareness(S::PlasmaShape) = _not_implemented(S)
 
 include("fitting.jl")
