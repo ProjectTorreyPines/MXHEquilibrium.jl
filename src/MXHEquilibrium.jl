@@ -12,8 +12,6 @@ using Trapz
 using Memoize
 using LRUCache
 
-using MeshTools
-
 import PolygonOps
 import Contour
 import Optim
