@@ -36,7 +36,7 @@ Optim = "1"
 PolygonOps = "0.1"
 StaticArrays = "1"
 Trapz = "2"
-Zygote = "0.6.75"
+Zygote = "0.6.75, 0.7"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
