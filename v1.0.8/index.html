@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>MXHEquilibrium.jl · MXHEquilibrium</title><meta name="title" content="MXHEquilibrium.jl · MXHEquilibrium"/><meta property="og:title" content="MXHEquilibrium.jl · MXHEquilibrium"/><meta property="twitter:title" content="MXHEquilibrium.jl · MXHEquilibrium"/><meta name="description" content="Documentation for MXHEquilibrium."/><meta property="og:description" content="Documentation for MXHEquilibrium."/><meta property="twitter:description" content="Documentation for MXHEquilibrium."/><script async src="https://www.googletagmanager.com/gtag/js?id=G-65D8V8C8VQ"></script><script>  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-65D8V8C8VQ', {'page_path': location.pathname + location.search + location.hash});
+</script><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="search_index.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href>MXHEquilibrium</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>MXHEquilibrium.jl</a><ul class="internal"><li><a class="tocitem" href="#AbstractEquilibrium-API"><span>AbstractEquilibrium API</span></a></li><li><a class="tocitem" href="#Solov&#39;ev-Equilibrium"><span>Solov&#39;ev Equilibrium</span></a></li><li><a class="tocitem" href="#EFIT-Equilibrium"><span>EFIT Equilibrium</span></a></li><li><a class="tocitem" href="#COCOS:-Tokamak-Coordinate-Conventions"><span>COCOS: Tokamak Coordinate Conventions</span></a></li><li><a class="tocitem" href="#Boundaries"><span>Boundaries</span></a></li><li><a class="tocitem" href="#Parameterized-Plasma-Shapes"><span>Parameterized Plasma Shapes</span></a></li><li><a class="tocitem" href="#Flux-Surface-Fitting"><span>Flux Surface Fitting</span></a></li><li><a class="tocitem" href="#Online-documentation"><span>Online documentation</span></a></li></ul></li><li><a class="tocitem" href="api/">API Reference</a></li><li><a class="tocitem" href="license/">License</a></li><li><a class="tocitem" href="notice/">Notice</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>MXHEquilibrium.jl</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>MXHEquilibrium.jl</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ProjectTorreyPines/MXHEquilibrium.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ProjectTorreyPines/MXHEquilibrium.jl/blob/master/README.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="MXHEquilibrium.jl"><a class="docs-heading-anchor" href="#MXHEquilibrium.jl">MXHEquilibrium.jl</a><a id="MXHEquilibrium.jl-1"></a><a class="docs-heading-anchor-permalink" href="#MXHEquilibrium.jl" title="Permalink"></a></h1><p>MXHEquilibrium.jl is a fork of Equilibrium.jl and provides functionality for Miller Extended Harmonic fitting.</p><h2 id="AbstractEquilibrium-API"><a class="docs-heading-anchor" href="#AbstractEquilibrium-API">AbstractEquilibrium API</a><a id="AbstractEquilibrium-API-1"></a><a class="docs-heading-anchor-permalink" href="#AbstractEquilibrium-API" title="Permalink"></a></h2><pre><code class="language-julia hljs">using MXHEquilibrium
+typeof(S) &lt;: AbstractEquilibrium
+
+psi = S(r, z) # Poloidal flux at r,z
+gradpsi = psi_gradient(S, r, z)
+
+B = Bfield(S, r, z)
+Bp = poloidal_Bfield(S, r, z)
+
+J = Jfield(S, r, z)
+Jp = poloidal_Jfield(S, r, z)
+
+F = poloidal_current(S, psi)
+Fprime = poloidal_current_gradient(S, psi)
+
+p = pressure(S, psi)
+pprime = pressure_gradient(S, psi)
+
+V = electric_potential(S, psi)
+gradV = electric_potential_gradient(S, psi)
+
+q = safety_factor(S, psi)
+
+maxis = magnetic_axis(S)
+
+btip = B0Ip_sign(S)
+
+rlims, zlims = limits(S)
+
+psi_lims = psi_limits(S)
+
+cc = cocos(S) # Return COCOS structure
+
+fs = flux_surface(S, psi) # returns a boundary object
+</code></pre><h2 id="Solov&#39;ev-Equilibrium"><a class="docs-heading-anchor" href="#Solov&#39;ev-Equilibrium">Solov&#39;ev Equilibrium</a><a id="Solov&#39;ev-Equilibrium-1"></a><a class="docs-heading-anchor-permalink" href="#Solov&#39;ev-Equilibrium" title="Permalink"></a></h2><p>Solov&#39;ev Equilibrium are analytic solutions to the Grad-Shafranov equation where the p&#39; and FF&#39; are constant. The resulting Grad-Shafranov equation takes the form <code>Δ⋆ψ = α + (1-α)x²</code> where <code>α</code> is some constant. The boundary conditions are found using a plasma shape parameterization.</p><pre><code class="language-julia hljs">
+# ITER parameters
+δ = 0.33        # Triangularity
+ϵ = 0.32        # Inverse aspect ratio a/R0
+κ = 1.7         # Elongation
+B0 = 5.3        # Magnitude of Toroidal field at R0 [T]
+R0 = 6.2        # Major Radius [m]
+Z0 = 0.0        # Elevation
+qstar = 1.57    # Kink safety factor
+alpha = -0.155  # constant
+
+S = solovev(B0, MillerShape(R0, Z0, ϵ, κ, δ), alpha, qstar, B0_dir=1, Ip_dir=1)
+
+
+SolovevEquilibrium
+  B0 = 2.0 [T]
+  S  = MillerShape{Float64}(6.2, 0.0, 0.32, 1.7, 0.33)
+  α  = -0.155
+  q⋆ = 1.57
+  βp = 1.1837605469381924
+  βt = 0.049177281028224634
+  σ  = 1
+  diverted  = false
+  symmetric = true</code></pre><h2 id="EFIT-Equilibrium"><a class="docs-heading-anchor" href="#EFIT-Equilibrium">EFIT Equilibrium</a><a id="EFIT-Equilibrium-1"></a><a class="docs-heading-anchor-permalink" href="#EFIT-Equilibrium" title="Permalink"></a></h2><p>EFIT geqdsk files are a commonly used file format. Here we provide routines for converting the GEQDSK files into an Equilibrium object.</p><pre><code class="language-julia hljs">using EFIT
+
+g = readg(&quot;g000001.01000&quot;)
+M = efit(g, clockwise_phi=false) # direction of phi needed to determine COCOS ID
+wall = Wall(g)
+
+in_vessel(wall, r, z)
+
+# or
+# M, wall = read_geqdsk(&quot;g000001.01000&quot;,clockwise_phi=false)
+</code></pre><h2 id="COCOS:-Tokamak-Coordinate-Conventions"><a class="docs-heading-anchor" href="#COCOS:-Tokamak-Coordinate-Conventions">COCOS: Tokamak Coordinate Conventions</a><a id="COCOS:-Tokamak-Coordinate-Conventions-1"></a><a class="docs-heading-anchor-permalink" href="#COCOS:-Tokamak-Coordinate-Conventions" title="Permalink"></a></h2><p>We provide routines for working determining, transforming, and checking COCOS&#39;s.</p><pre><code class="language-julia hljs">julia&gt; cocos(3)
+COCOS = 3
+ e_Bp  = 0
+ σ_Bp  = -1
+ σ_RΦZ = (R,Φ,Z): 1
+ σ_ρθΦ = (ρ,Φ,θ): -1
+ Φ from top: CCW
+ θ from front: CCW
+ ψ_ref: Decreasing assuming +Ip, +B0
+ sign(q) = -1 assuming +Ip, +B0
+ sign(p&#39;) = 1 assuming +Ip, +B0
+
+julia&gt; transform_cocos(3,1)
+Dict{Any, Any} with 14 entries:
+  &quot;Z&quot;        =&gt; 1.0
+  &quot;Q&quot;        =&gt; -1
+  &quot;P&quot;        =&gt; 1.0
+  &quot;B&quot;        =&gt; 1.0
+  &quot;F_FPRIME&quot; =&gt; -1.0
+  &quot;ψ&quot;        =&gt; -1.0
+  &quot;TOR&quot;      =&gt; 1.0
+  &quot;Φ&quot;        =&gt; 1.0
+  &quot;PSI&quot;      =&gt; -1.0
+  &quot;I&quot;        =&gt; 1.0
+  &quot;J&quot;        =&gt; 1.0
+  &quot;R&quot;        =&gt; 1.0
+  &quot;F&quot;        =&gt; 1.0
+  &quot;PPRIME&quot;   =&gt; -1.0</code></pre><h2 id="Boundaries"><a class="docs-heading-anchor" href="#Boundaries">Boundaries</a><a id="Boundaries-1"></a><a class="docs-heading-anchor-permalink" href="#Boundaries" title="Permalink"></a></h2><p>MXHEquilibrium.jl also provides routines for working with boundries such as walls or flux surfaces. Internally boundaries are stored as a list of points forming a polygon.</p><pre><code class="language-julia hljs">
+fs = flux_surface(S, psi)
+
+in_plasma(fs, r, z) # or in_vessel(fs, r, z), in_boundary(fs, r, z)
+
+cicumference(fs)
+
+area(fs) # Area enclosed by the boundary
+
+volume(fs) # assuming toroidal symmetry. F can be a vector with the same length as fs or a function of (r,z)
+
+average(fs, F) # Average F over the boundary
+
+area_average(fs, F) # average F over the area
+
+volume_average(fs, F) # average F over the volume</code></pre><h2 id="Parameterized-Plasma-Shapes"><a class="docs-heading-anchor" href="#Parameterized-Plasma-Shapes">Parameterized Plasma Shapes</a><a id="Parameterized-Plasma-Shapes-1"></a><a class="docs-heading-anchor-permalink" href="#Parameterized-Plasma-Shapes" title="Permalink"></a></h2><p>MXHEquilibrium.jl provides the commonly used plasma shape parameterizations.</p><pre><code class="language-julia hljs">help?&gt; MillerShape # alias = MShape
+
+  MillerShape Structure
+
+  Defines the Miller Plasma Shape Parameterization
+
+  Fields:
+  R0 - Major Radius [m]
+  Z0 - Elevation [m]
+  ϵ - Inverse Aspect Ratio a/R0 where a = minor radius
+  κ - Elongation
+  δ - Triangularity
+
+help?&gt; TurnbullMillerShape # alias = TMShape
+
+  TurnbullMillerShape Structure
+
+  Defines the Turnbull-Miller Plasma Shape Parameterization
+  &gt; Turnbull, A. D., et al. &quot;Improved magnetohydrodynamic stability through optimization of higher order moments in cross-section shape of tokamaks.&quot; Physics of Plasmas 6.4 (1999): 1113-1116.
+ 
+  Fields:
+  R0 - Major Radius [m]
+  Z0 - Elevation [m]
+  ϵ - Inverse Aspect Ratio a/R0 where a = minor radius
+  κ - Elongation
+  δ - Triangularity
+  ζ - Squareness
+
+help?&gt; AsymmetricMillerShape # alias = AMShape
+
+  AsymmetricMillerShape Structure
+
+  Defines the Asymmetric Miller Plasma Shape Parameterization
+ 
+  Fields:
+  R0 - Major Radius [m]
+  Z0 - Elevation [m]
+  ϵ - Inverse Aspect Ratio a/R0 where a = minor radius
+  κ - Elongation
+  δl - Lower Triangularity
+  δu - Upper Triangularity
+
+help?&gt; MillerExtendedHarmonicShape # alias = MXHShape 
+
+  MillerExtendedHarmonicShape Structure
+
+  Defines the Miller Extended Harmonic Plasma Shape Parameterization
+  &gt; Arbon, Ryan, Jeff Candy, and Emily A. Belli. &quot;Rapidly-convergent flux-surface shape parameterization.&quot; Plasma Physics and Controlled Fusion 63.1 (2020): 012001.
+
+  Fields:
+  R0 - Major Radius [m]
+  Z0 - Elevation [m]
+  ϵ - Inverse Aspect Ratio a/R0 where a = minor radius
+  κ - Elongation
+  c0 - Tilt
+  c - Cosine coefficients i.e. [ovality,...]
+  s - Sine coefficients i.e. [asin(triangularity), squareness,...]</code></pre><h2 id="Flux-Surface-Fitting"><a class="docs-heading-anchor" href="#Flux-Surface-Fitting">Flux Surface Fitting</a><a id="Flux-Surface-Fitting-1"></a><a class="docs-heading-anchor-permalink" href="#Flux-Surface-Fitting" title="Permalink"></a></h2><p>MXHEquilibrium.jl provides routines for fitting flux surfaces to a PlasmaShape</p><pre><code class="language-julia hljs">julia&gt; g = readg(@__DIR__*&quot;/test/g150219.03200&quot;);
+
+julia&gt; M = efit(g,clockwise_phi=false);
+
+julia&gt; bdry = boundary(M);
+
+julia&gt; MXH = fit(bdry,MXHShape(10)) # use 10 fourier components
+MillerExtendedHarmonicShape{10, Float64}
+  R0 = 1.6667475890195798 [m]
+  Z0 = -0.14918543837718545 [m]
+  ϵ  = 0.3278211449811159
+  κ  = 1.8166930389369045
+  δ  = 0.4745349500498265
+  ζ  = 0.0640865222160445
+  ξ  = -0.12517240241115193
+  τ  = -0.0847654065659985
+
+julia&gt; bdry = boundary(MXH; N=100)
+
+julia&gt; fMXH = fit(bdry,MXHShape(10))
+MillerExtendedHarmonicShape{10, Float64}
+  R0 = 1.6667278385191975 [m]
+  Z0 = -0.14918543837718545 [m]
+  ϵ  = 0.3277787473904293
+  κ  = 1.8167208515952422
+  δ  = 0.4745418627448689
+  ζ  = 0.06313553088494958
+  ξ  = -0.11595260388302828
+  τ  = -0.08051086241624195</code></pre><h2 id="Online-documentation"><a class="docs-heading-anchor" href="#Online-documentation">Online documentation</a><a id="Online-documentation-1"></a><a class="docs-heading-anchor-permalink" href="#Online-documentation" title="Permalink"></a></h2><p>For more details, see the <a href="https://projecttorreypines.github.io/MXHEquilibrium.jl/dev">online documentation</a>.</p><p><img src="https://github.com/ProjectTorreyPines/MXHEquilibrium.jl/actions/workflows/make_docs.yml/badge.svg" alt="Docs"/></p></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="api/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.11.4 on <span class="colophon-date" title="Wednesday 21 May 2025 19:48">Wednesday 21 May 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
