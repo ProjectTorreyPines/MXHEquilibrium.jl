@@ -146,13 +146,13 @@ function flux_surface(x::AbstractRange, y::AbstractRange, Psi::Matrix, psi::Floa
     # pick a flux surface that closes and encompasses the magnetic axis
     for cc in Contour.lines(cl)
         xc, yc = Contour.coordinates(cc)
-
         if !((xc[1] == xc[end]) && (yc[1] == yc[end]))
             continue
         end
-
-        if PolygonOps.inpolygon(maxis, collect(zip(xc, yc))) ==0
-            continue
+        if length(maxis) > 0
+            if PolygonOps.inpolygon(maxis, collect(zip(xc, yc))) == 0
+                continue
+            end
         end
 
         return Boundary(xc, yc)
