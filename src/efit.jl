@@ -88,7 +88,7 @@ function electric_potential_gradient(N::EFITEquilibrium, psi)
     return Interpolations.gradient(N.V, psi)[1]
 end
 
-function plasma_boundary_psi(N::EFITEquilibrium; precision::Float64=1E-3, r::AbstractRange=N.r, z::AbstractRange=N.z)
+@with_pool pool function plasma_boundary_psi(N::EFITEquilibrium; precision::Float64=1E-3, r::AbstractRange=N.r, z::AbstractRange=N.z)
     original_psirange = psi_limits(N)
     psirange = collect(original_psirange)
     psirange[1] = psirange[1] - (psirange[end] - psirange[1]) * 0.5
@@ -98,9 +98,16 @@ function plasma_boundary_psi(N::EFITEquilibrium; precision::Float64=1E-3, r::Abs
     zlims = (minimum(z), maximum(z))
     dd = sqrt((r[2] - r[1])^2 + (z[2] - z[1])^2)
 
-    Psi = [N(rr, zz) for rr in r, zz in z]
+    # Acquire a Matrix from the preallocated pool backed by AdaptiveArrayPools
+    Psi = unsafe_acquire!(pool, eltype(r), length(r), length(z))
+    @inbounds for j in eachindex(z)
+        for i in eachindex(r) 
+            Psi[i, j] = N(r[i], z[j])
+        end
+    end
 
-    for k in 1:100
+
+    for _ in 1:100
         psimid = (psirange[1] + psirange[end]) / 2.0
         bnd = flux_surface(r, z, Psi, psimid)
         if bnd !== nothing
