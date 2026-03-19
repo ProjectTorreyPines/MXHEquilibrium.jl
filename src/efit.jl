@@ -99,7 +99,7 @@ end
     dd = sqrt((r[2] - r[1])^2 + (z[2] - z[1])^2)
 
     # Acquire a Matrix from the preallocated pool backed by AdaptiveArrayPools
-    Psi = unsafe_acquire!(pool, eltype(r), length(r), length(z))
+    Psi = acquire!(pool, eltype(r), length(r), length(z))
     @inbounds for j in eachindex(z)
         for i in eachindex(r) 
             Psi[i, j] = N(r[i], z[j])
