@@ -780,8 +780,7 @@ function curvature(S::PlasmaShape, θ)
     xpp = ForwardDiff.derivative(t -> ForwardDiff.derivative(fx, t), θ)
     ypp = ForwardDiff.derivative(t -> ForwardDiff.derivative(fy, t), θ)
 
-    κ = abs(yp * xpp - ypp * xp) / (xp^2 + yp^2)^1.5
-    return κ
+    return abs(yp * xpp - ypp * xp) / (xp^2 + yp^2)^1.5
 end
 
 # rrule: enables reverse-mode AD (Zygote etc.) to differentiate through curvature
@@ -793,11 +792,11 @@ function ChainRulesCore.rrule(::typeof(curvature), S::PlasmaShape, θ)
         fnames = fieldnames(typeof(S))
         wrapper = typeof(S).name.wrapper
 
-        # ∂curvature/∂(each field)
+        # ∂curvature/∂(each field) — Δκ outside derivative to avoid higher-order AD issues
         partials = ntuple(length(fnames)) do i
-            ForwardDiff.derivative(zero(eltype(S))) do h
+            Δκ * ForwardDiff.derivative(zero(eltype(S))) do h
                 vals = ntuple(j -> j == i ? getfield(S, fnames[j]) + h : getfield(S, fnames[j]), length(fnames))
-                Δκ * curvature(wrapper(vals...), θ)
+                curvature(wrapper(vals...), θ)
             end
         end
         dS = ChainRulesCore.Tangent{typeof(S)}(; zip(fnames, partials)...)
