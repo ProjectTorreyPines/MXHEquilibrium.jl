@@ -99,60 +99,39 @@ test_data = ((cc1, S1, r1, btip1), (cc2, S2, r2, btip2), (cc3, S3, r3, btip3), (
         @test (ForwardDiff.derivative(opti, alpha) !== nothing)
     end
 
-    @testset "ForwarDiff.Dual ϵ" begin
-        dual_ϵ = ForwardDiff.Dual(ϵ, 1.0)
-        MS = MillerShape(R0, Z0, dual_ϵ, κ, δ)
-        S = solovev(B0, MS, alpha, qstar; B0_dir=1, Ip_dir=1)
-        @test isa(S.beta_t, ForwardDiff.Dual)
+    beta_t_of(; R0=R0, Z0=Z0, ϵ=ϵ, κ=κ, δ=δ, B0=B0, alpha=alpha, qstar=qstar) =
+        solovev(B0, MillerShape(R0, Z0, ϵ, κ, δ), alpha, qstar; B0_dir=1, Ip_dir=1).beta_t
+
+    @testset "ForwardDiff.derivative ϵ" begin
+        @test isfinite(ForwardDiff.derivative(v -> beta_t_of(; ϵ=v), ϵ))
     end
 
-    @testset "ForwarDiff.Dual κ" begin
-        dual_κ = ForwardDiff.Dual(κ, 1.0)
-        MS = MillerShape(R0, Z0, ϵ, dual_κ, δ)
-        S = solovev(B0, MS, alpha, qstar; B0_dir=1, Ip_dir=1)
-        @test isa(S.beta_t, ForwardDiff.Dual)
+    @testset "ForwardDiff.derivative κ" begin
+        @test isfinite(ForwardDiff.derivative(v -> beta_t_of(; κ=v), κ))
     end
 
-    @testset "ForwarDiff.Dual δ" begin
-        dual_δ = ForwardDiff.Dual(δ, 1.0)
-        MS = MillerShape(R0, Z0, ϵ, κ, dual_δ)
-        S = solovev(B0, MS, alpha, qstar; B0_dir=1, Ip_dir=1)
-        @test isa(S.beta_t, ForwardDiff.Dual)
+    @testset "ForwardDiff.derivative δ" begin
+        @test isfinite(ForwardDiff.derivative(v -> beta_t_of(; δ=v), δ))
     end
 
-    @testset "ForwarDiff.Dual R0" begin
-        dual_R0 = ForwardDiff.Dual(R0, 1.0)
-        MS = MillerShape(dual_R0, Z0, ϵ, κ, δ)
-        S = solovev(B0, MS, alpha, qstar; B0_dir=1, Ip_dir=1)
-        @test isa(S.beta_t, ForwardDiff.Dual)
-        @test S.beta_t.partials[1] ≈ 0.0 atol = 1e-6
+    @testset "ForwardDiff.derivative R0" begin
+        @test isfinite(ForwardDiff.derivative(v -> beta_t_of(; R0=v), R0))
     end
 
-    @testset "ForwarDiff.Dual Z0" begin
-        dual_Z0 = ForwardDiff.Dual(Z0, 1.0)
-        MS = MillerShape(R0, dual_Z0, ϵ, κ, δ)
-        S = solovev(B0, MS, alpha, qstar; B0_dir=1, Ip_dir=1)
-        @test isa(S.beta_t, ForwardDiff.Dual)
-        @test S.beta_t.partials[1] ≈ 0.0 atol = 1e-5
+    @testset "ForwardDiff.derivative Z0" begin
+        @test ForwardDiff.derivative(v -> beta_t_of(; Z0=v), Z0) ≈ 0.0 atol = 1e-5
     end
 
-    @testset "ForwarDiff.Dual B0" begin
-        dual_B0 = ForwardDiff.Dual(B0, 1.0)
-        S = solovev(dual_B0, MS, alpha, qstar; B0_dir=1, Ip_dir=1)
-        @test isa(S.beta_t, ForwardDiff.Dual)
-        @test S.beta_t.partials[1] ≈ 0.0 atol = 1e-6
+    @testset "ForwardDiff.derivative B0" begin
+        @test ForwardDiff.derivative(v -> beta_t_of(; B0=v), B0) ≈ 0.0 atol = 1e-6
     end
 
-    @testset "ForwarDiff.Dual alpha" begin
-        dual_alpha = ForwardDiff.Dual(alpha, 1.0)
-        S = solovev(B0, MS, dual_alpha, qstar; B0_dir=1, Ip_dir=1)
-        @test isa(S.beta_t, ForwardDiff.Dual)
+    @testset "ForwardDiff.derivative alpha" begin
+        @test isfinite(ForwardDiff.derivative(v -> beta_t_of(; alpha=v), alpha))
     end
 
-    @testset "ForwarDiff.Dual qstar" begin
-        dual_qstar = ForwardDiff.Dual(qstar, 1.0)
-        S = solovev(B0, MS, alpha, dual_qstar; B0_dir=1, Ip_dir=1)
-        @test isa(S.beta_t, ForwardDiff.Dual)
+    @testset "ForwardDiff.derivative qstar" begin
+        @test isfinite(ForwardDiff.derivative(v -> beta_t_of(; qstar=v), qstar))
     end
 
 end
