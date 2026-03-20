@@ -3,8 +3,8 @@ module MXHEquilibrium
 using EFIT
 using LinearAlgebra
 using Interpolations
+using ChainRulesCore
 using ForwardDiff
-using Zygote
 using StaticArrays
 using HCubature
 using Trapz

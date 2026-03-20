@@ -770,19 +770,44 @@ function plasma_geometry(S::AMShape)
     return PlasmaGeometricParameters(S.R0, S.Z0, S.R0 * S.ϵ, S.Z0, (S.κ, S.κ), (S.δl, S.δu), (Z, Z, Z, Z))
 end
 
-#--- Curvature calculation via AutoDiff ---
-_d1x(S) = (S._get_x)'
-_d1y(S) = (S._get_y)'
-_d2x(S) = (S._get_x)''
-_d2y(S) = (S._get_y)''
-
+#--- Curvature calculation via ForwardDiff ---
 function curvature(S::PlasmaShape, θ)
-    xp = _d1x(S)(θ)
-    yp = _d1y(S)(θ)
-    xpp = _d2x(S)(θ)
-    ypp = _d2y(S)(θ)
+    fx = t -> S(t)[1]
+    fy = t -> S(t)[2]
+
+    xp = ForwardDiff.derivative(fx, θ)
+    yp = ForwardDiff.derivative(fy, θ)
+    xpp = ForwardDiff.derivative(t -> ForwardDiff.derivative(fx, t), θ)
+    ypp = ForwardDiff.derivative(t -> ForwardDiff.derivative(fy, t), θ)
 
     κ = abs(yp * xpp - ypp * xp) / (xp^2 + yp^2)^1.5
     return κ
 end
+
+# rrule: enables reverse-mode AD (Zygote etc.) to differentiate through curvature
+# via ForwardDiff. Shape fields are plain Float64 inside Zygote's pullback,
+# so ForwardDiff.derivative on curvature works without tag conflicts.
+function ChainRulesCore.rrule(::typeof(curvature), S::PlasmaShape, θ)
+    κ_val = curvature(S, θ)
+    function curvature_pullback(Δκ)
+        fnames = fieldnames(typeof(S))
+        wrapper = typeof(S).name.wrapper
+
+        # ∂curvature/∂(each field)
+        partials = ntuple(length(fnames)) do i
+            ForwardDiff.derivative(zero(eltype(S))) do h
+                vals = ntuple(j -> j == i ? getfield(S, fnames[j]) + h : getfield(S, fnames[j]), length(fnames))
+                Δκ * curvature(wrapper(vals...), θ)
+            end
+        end
+        dS = ChainRulesCore.Tangent{typeof(S)}(; zip(fnames, partials)...)
+
+        # ∂curvature/∂θ
+        dθ = Δκ * ForwardDiff.derivative(t -> curvature(S, t), θ)
+
+        return ChainRulesCore.NoTangent(), dS, dθ
+    end
+    return κ_val, curvature_pullback
+end
+
 

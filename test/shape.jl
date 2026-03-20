@@ -38,6 +38,32 @@ S = MillerShape(R0, Z0, ϵ, κ, δ)
         @test curvature(S, pi / 2) * R0 ≈ κ / (ϵ * cos(δ₀)^2)
     end
 
+    @testset "Curvature rrule" begin
+        using ChainRulesCore: rrule, NoTangent
+
+        # Verify rrule returns correct value
+        κ_val, pullback = rrule(curvature, S, 0.0)
+        @test κ_val ≈ curvature(S, 0.0)
+
+        # Verify pullback returns correct types
+        df, dS, dθ = pullback(1.0)
+        @test df isa NoTangent
+        @test isfinite(dθ)
+
+        # Verify ∂curvature/∂(shape fields) against ForwardDiff
+        for (i, fname) in enumerate(fieldnames(MillerShape))
+            fd_grad = ForwardDiff.derivative(zero(Float64)) do h
+                vals = ntuple(j -> j == i ? getfield(S, fieldnames(MillerShape)[j]) + h : getfield(S, fieldnames(MillerShape)[j]), length(fieldnames(MillerShape)))
+                curvature(MillerShape(vals...), 0.0)
+            end
+            @test getproperty(dS, fname) ≈ fd_grad rtol = 1e-6
+        end
+
+        # Verify ∂curvature/∂θ against ForwardDiff
+        fd_dθ = ForwardDiff.derivative(t -> curvature(S, t), 0.0)
+        @test dθ ≈ fd_dθ rtol = 1e-6
+    end
+
     @testset "MXH Fitting" begin
         R0 = 1.6667475890195798
         Z0 = -0.14918543837718545
