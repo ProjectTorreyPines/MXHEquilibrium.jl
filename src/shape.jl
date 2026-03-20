@@ -792,14 +792,21 @@ function ChainRulesCore.rrule(::typeof(curvature), S::PlasmaShape, θ)
         fnames = fieldnames(typeof(S))
         wrapper = typeof(S).name.wrapper
 
-        # ∂curvature/∂(each field) — Δκ outside derivative to avoid higher-order AD issues
-        partials = ntuple(length(fnames)) do i
-            Δκ * ForwardDiff.derivative(zero(eltype(S))) do h
-                vals = ntuple(j -> j == i ? getfield(S, fnames[j]) + h : getfield(S, fnames[j]), length(fnames))
-                curvature(wrapper(vals...), θ)
+        # ∂curvature/∂(each field) — only scalar (Real) fields are perturbed;
+        # non-scalar fields (SVector, NTuple in MXHShape/LuceShape) get zero tangent.
+        T = typeof(S)
+        n = length(fnames)
+        partials = ntuple(n) do i
+            if fieldtype(T, i) <: Real
+                Δκ * ForwardDiff.derivative(zero(eltype(S))) do h
+                    vals = ntuple(j -> j == i ? getfield(S, fnames[j]) + h : getfield(S, fnames[j]), n)
+                    curvature(wrapper(vals...), θ)
+                end
+            else
+                ChainRulesCore.ZeroTangent()
             end
         end
-        dS = ChainRulesCore.Tangent{typeof(S)}(; zip(fnames, partials)...)
+        dS = ChainRulesCore.Tangent{T}(; zip(fnames, partials)...)
 
         # ∂curvature/∂θ
         dθ = Δκ * ForwardDiff.derivative(t -> curvature(S, t), θ)
