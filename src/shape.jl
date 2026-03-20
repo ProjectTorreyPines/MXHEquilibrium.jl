@@ -770,19 +770,50 @@ function plasma_geometry(S::AMShape)
     return PlasmaGeometricParameters(S.R0, S.Z0, S.R0 * S.ϵ, S.Z0, (S.κ, S.κ), (S.δl, S.δu), (Z, Z, Z, Z))
 end
 
-#--- Curvature calculation via AutoDiff ---
-_d1x(S) = (S._get_x)'
-_d1y(S) = (S._get_y)'
-_d2x(S) = (S._get_x)''
-_d2y(S) = (S._get_y)''
-
+#--- Curvature calculation via ForwardDiff ---
 function curvature(S::PlasmaShape, θ)
-    xp = _d1x(S)(θ)
-    yp = _d1y(S)(θ)
-    xpp = _d2x(S)(θ)
-    ypp = _d2y(S)(θ)
+    fx = t -> S(t)[1]
+    fy = t -> S(t)[2]
 
-    κ = abs(yp * xpp - ypp * xp) / (xp^2 + yp^2)^1.5
-    return κ
+    xp = ForwardDiff.derivative(fx, θ)
+    yp = ForwardDiff.derivative(fy, θ)
+    xpp = ForwardDiff.derivative(t -> ForwardDiff.derivative(fx, t), θ)
+    ypp = ForwardDiff.derivative(t -> ForwardDiff.derivative(fy, t), θ)
+
+    return abs(yp * xpp - ypp * xp) / (xp^2 + yp^2)^1.5
 end
+
+# rrule: enables reverse-mode AD (Zygote etc.) to differentiate through curvature
+# via ForwardDiff. Shape fields are plain Float64 inside Zygote's pullback,
+# so ForwardDiff.derivative on curvature works without tag conflicts.
+function ChainRulesCore.rrule(::typeof(curvature), S::PlasmaShape, θ)
+    κ_val = curvature(S, θ)
+    function curvature_pullback(Δκ)
+        fnames = fieldnames(typeof(S))
+        wrapper = typeof(S).name.wrapper
+
+        # ∂curvature/∂(each field) — only scalar (Real) fields are perturbed;
+        # non-scalar fields (SVector, NTuple in MXHShape/LuceShape) get zero tangent.
+        T = typeof(S)
+        n = length(fnames)
+        partials = ntuple(n) do i
+            if fieldtype(T, i) <: Real
+                Δκ * ForwardDiff.derivative(zero(eltype(S))) do h
+                    vals = ntuple(j -> j == i ? getfield(S, fnames[j]) + h : getfield(S, fnames[j]), n)
+                    curvature(wrapper(vals...), θ)
+                end
+            else
+                ChainRulesCore.ZeroTangent()
+            end
+        end
+        dS = ChainRulesCore.Tangent{T}(; zip(fnames, partials)...)
+
+        # ∂curvature/∂θ
+        dθ = Δκ * ForwardDiff.derivative(t -> curvature(S, t), θ)
+
+        return ChainRulesCore.NoTangent(), dS, dθ
+    end
+    return κ_val, curvature_pullback
+end
+
 

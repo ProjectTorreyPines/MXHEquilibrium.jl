@@ -317,8 +317,7 @@ end
 
 function Base.convert(::Type{SolovevEquilibrium{T,N,R}}, M0::SolovevEquilibrium) where {T,N,R}
     B0 = convert(T, M0.B0)
-    stype = promote_rule(typeof(M0.S), R)
-    S = convert(stype, M0.S)
+    S = convert(PlasmaShape{R}, M0.S)
     alpha = convert(T, M0.alpha)
     qstar = convert(T, M0.qstar)
     psi0 = convert(T, M0.psi0)
