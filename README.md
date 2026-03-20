@@ -1,3 +1,6 @@
+![Docs](https://github.com/ProjectTorreyPines/MXHEquilibrium.jl/actions/workflows/make_docs.yml/badge.svg)
+[![CI](https://github.com/ProjectTorreyPines/MXHEquilibrium.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/ProjectTorreyPines/MXHEquilibrium.jl/actions/workflows/CI.yml)
+
 # MXHEquilibrium.jl
 
 MXHEquilibrium.jl is a fork of Equilibrium.jl and provides functionality for Miller Extended Harmonic fitting.
@@ -248,4 +251,3 @@ MillerExtendedHarmonicShape{10, Float64}
 ## Online documentation
 For more details, see the [online documentation](https://projecttorreypines.github.io/MXHEquilibrium.jl/dev).
 
-![Docs](https://github.com/ProjectTorreyPines/MXHEquilibrium.jl/actions/workflows/make_docs.yml/badge.svg)
