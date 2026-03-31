@@ -12,6 +12,8 @@ using Trapz
 using Memoize
 using LRUCache
 
+using AdaptiveArrayPools
+
 import PolygonOps
 import Contour
 import Optim
